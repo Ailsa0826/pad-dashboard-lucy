@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>2026年Pad销售数据看板（Lucy版）</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+            color: #333;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* 月份切片器 */
+        .month-slicer {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 20px;
+            background: white;
+            padding: 4px;
+            border-radius: 6px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .month-btn {
+            padding: 8px 20px;
+            border: 1px solid #d9d9d9;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin: 0;
+        }
+        .month-btn:first-child { border-radius: 4px 0 0 4px; }
+        .month-btn:last-child { border-radius: 0 4px 4px 0; }
+        .month-btn:not(:first-child) { border-left: none; }
+        .month-btn:hover { background: #f5f5f5; }
+        .month-btn.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        /* 顶部标题栏 */
+        .header-banner {
+            background: linear-gradient(135deg, #ff9500 0%, #ff7700 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header-banner h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        .header-banner p {
+            font-size: 14px;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        /* 第一行：倒计时 + 达成进度 + 店铺Mix */
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .card-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            font-weight: normal;
+            text-align: center;
+        }
+
+        /* 倒计时 */
+        .countdown-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .countdown-item {
+            background: #1890ff;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 4px;
+            text-align: center;
+            min-width: 50px;
+        }
+        .countdown-num {
+            font-size: 28px;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .countdown-label {
+            font-size: 12px;
+            margin-top: 4px;
+            opacity: 0.9;
+        }
+        .countdown-sep {
+            font-size: 24px;
+            color: #1890ff;
+            font-weight: bold;
+        }
+
+        /* 达成进度 */
+        .achievement-rate {
+            text-align: center;
+        }
+        .achievement-percent {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+            line-height: 1;
+        }
+        .progress-container {
+            width: 100%;
+            height: 12px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #52c41a;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        .achievement-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+        .info-current {
+            color: #1890ff;
+            font-weight: 500;
+        }
+        .info-target {
+            color: #999;
+        }
+        .info-target input {
+            border: 1px solid #d9d9d9;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 4px;
+            width: 60px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* 第二行：4个渠道卡片 */
+        .channel-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .channel-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .channel-title {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .channel-percent {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        .channel-progress {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .channel-progress-fill {
+            height: 100%;
+            background: #1890ff;
+            border-radius: 4px;
+        }
+        .channel-values {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .value-current {
+            color: #1890ff;
+            font-weight: 500;
+        }
+        .value-target {
+            color: #999;
+        }
+        .value-target input {
+            border: 1px solid #d9d9d9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+            width: 50px;
+            text-align: center;
+            font-size: 13px;
+            color: #333;
+        }
+
+        /* 图表行 */
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* 每日销量走势特殊样式 */
+        .daily-stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+        .stat-item {
+            font-size: 14px;
+            color: #666;
+        }
+        .stat-value {
+            color: #1890ff;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .top-row { grid-template-columns: 1fr; }
+            .channel-row { grid-template-columns: repeat(2, 1fr); }
+            .chart-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 月份切片器 -->
+        <div class="month-slicer" id="monthSlicer">
+            <button class="month-btn" data-month="1月" onclick="switchMonth('1月')">1月</button>
+            <button class="month-btn" data-month="2月" onclick="switchMonth('2月')">2月</button>
+            <button class="month-btn active" data-month="3月" onclick="switchMonth('3月')">3月</button>
+        </div>
+
+        <!-- 顶部标题 -->
+        <div class="header-banner">
+            <h1 id="headerTitle">3月直营平板销售</h1>
+            <p id="headerSubtitle">数据时间：2026年3月 (截至3.21) | 生成时间：<span id="genTime"></span></p>
+        </div>
+
+        <!-- 第一行 -->
+        <div class="top-row">
+            <!-- 倒计时 -->
+            <div class="card">
+                <div class="card-title">FY26 <span class="month-num">1</span>月倒计时</div>
+                <div class="countdown-box">
+                    <div class="countdown-item">
+                        <div class="countdown-num" id="cd-months">0</div>
+                        <div class="countdown-label">月</div>
+                    </div>
+                    <div class="countdown-sep">:</div>
+                    <div class="countdown-item">
+                        <div class="countdown-num" id="cd-days">0</div>
+                        <div class="countdown-label">天</div>
+                    </div>
+                    <div class="countdown-sep">:</div>
+                    <div class="countdown-item">
+                        <div class="countdown-num" id="cd-hours">00</div>
+                        <div class="countdown-label">时</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 达成进度 -->
+            <div class="card">
+                <div class="card-title">FY26 <span class="month-num">1</span>月直营PO达成进度</div>
+                <div class="achievement-rate">
+                    <div class="achievement-percent" id="achievementRate">57%</div>
+                    <div class="progress-container">
+                        <div class="progress-fill" id="progressBar" style="width: 57%"></div>
+                    </div>
+                    <div class="achievement-info">
+                        <span class="info-current">当前 <span id="currentSales">27.1</span>K</span>
+                        <span style="color: #999;">|</span>
+                        <span class="info-target">目标 <input type="text" id="targetSales" value="47500" onchange="updateTarget(this.value)"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 店铺Mix -->
+            <div class="card">
+                <div class="card-title">直营分店铺Mix</div>
+                <div id="store-mix-chart" style="height: 180px;"></div>
+            </div>
+        </div>
+
+        <!-- 第二行：4个渠道 -->
+        <div class="channel-row" id="channelRow">
+            <!-- 动态生成 -->
+        </div>
+
+        <!-- 第三行：机型图表 -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <div class="chart-title">重点机型分布Mix</div>
+                <div id="model-mix-chart" style="height: 300px;"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">重点机型月均销售</div>
+                <div id="model-daily-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <!-- 第四行：每日销量 -->
+        <div class="chart-row">
+            <div class="chart-card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">每日销量走势</div>
+                    <div class="daily-stats" style="margin-bottom: 0; font-size: 26px;">
+                        <div class="stat-item">近7天日均销售：<span class="stat-value" id="last7avg" style="font-size: 28px; font-weight: bold;">0</span> 台</div>
+                        <div class="stat-item">月均销售：<span class="stat-value" id="monthlyAvg" style="font-size: 28px; font-weight: bold;">0</span> 台</div>
+                    </div>
+                </div>
+                <div id="daily-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <!-- 第五行：Bay Day销售情况 -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">京东官旗Bay Day销售情况</div>
+                    <div>
+                        <div style="font-size: 26px; color: #666; text-align: right;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="jd-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666; text-align: right;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="jd-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="jd-bayday-chart" style="height: 300px;"></div>
+            </div>
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">官网Bay Day销售情况</div>
+                    <div>
+                        <div style="font-size: 26px; color: #666; text-align: right;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="gw-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666; text-align: right;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="gw-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="gw-bayday-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <!-- 第六行：天猫、抖音Bay Day -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">天猫Bay Day销售情况</div>
+                    <div>
+                        <div style="font-size: 26px; color: #666; text-align: right;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="tm-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666; text-align: right;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="tm-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="tm-bayday-chart" style="height: 300px;"></div>
+            </div>
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">抖音Bay Day销售情况</div>
+                    <div>
+                        <div style="font-size: 26px; color: #666; text-align: right;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="dy-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666; text-align: right;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="dy-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="dy-bayday-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <!-- 第七行：重点产品分天销售走势 -->
+        <div class="chart-row">
+            <div class="chart-card full-width">
+                <div class="chart-title">重点产品分天销售走势</div>
+                <div id="product-trend-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 第八行：小新Pad11分天销售走势 -->
+        <div class="chart-row">
+            <div class="chart-card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">小新Pad11分天销售走势（按店铺）</div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 26px; color: #666;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="pad11-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="pad11-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="pad11-trend-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 第九行：小新平板12.1分天销售走势 -->
+        <div class="chart-row">
+            <div class="chart-card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">小新平板12.1分天销售走势（按店铺）</div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 26px; color: #666;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="pad121-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="pad121-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="pad121-trend-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 第十行：PadPro12.7分天销售走势 -->
+        <div class="chart-row">
+            <div class="chart-card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">PadPro12.7分天销售走势（按店铺）</div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 26px; color: #666;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="padpro127-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="padpro127-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="padpro127-trend-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 第十一行：PadProGT分天销售走势 -->
+        <div class="chart-row">
+            <div class="chart-card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">PadProGT分天销售走势（按店铺）</div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 26px; color: #666;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="padprogt-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="padprogt-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="padprogt-trend-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 第十二行：拯救者Y700 4代分天销售走势 -->
+        <div class="chart-row">
+            <div class="chart-card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">拯救者Y700 4代分天销售走势（按店铺）</div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 26px; color: #666;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="y700-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="y700-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="y700-trend-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 第十三行：Y700 五代分天销售走势（3月新品） -->
+        <div class="chart-row" id="y700-5th-row" style="display: none;">
+            <div class="chart-card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">Y700 五代分天销售走势（按店铺）</div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 26px; color: #666;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="y700-5th-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="y700-5th-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="y700-5th-trend-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 第十四行：小新Pro13分天销售走势（3月新品） -->
+        <div class="chart-row" id="xiaoxin-pro13-row" style="display: none;">
+            <div class="chart-card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin-bottom: 0;">小新Pro13分天销售走势（按店铺）</div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 26px; color: #666;">月均日销: <span style="color: #1890ff; font-weight: bold; font-size: 28px;" id="xiaoxin-pro13-monthly-avg">0</span></div>
+                        <div style="font-size: 26px; color: #666;">近7日销: <span style="color: #52c41a; font-weight: bold; font-size: 28px;" id="xiaoxin-pro13-last7-avg">0</span></div>
+                    </div>
+                </div>
+                <div id="xiaoxin-pro13-trend-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 第十五行：京东官旗 + 官网 重点机型分布Mix -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <div class="chart-title">京东官旗重点机型分布Mix</div>
+                <div id="jd-model-mix-chart" style="height: 350px;"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">官网重点机型分布Mix</div>
+                <div id="gw-model-mix-chart" style="height: 350px;"></div>
+            </div>
+        </div>
+
+        <!-- 第十六行：天猫 + 抖快 重点机型分布Mix -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <div class="chart-title">天猫重点机型分布Mix</div>
+                <div id="tm-model-mix-chart" style="height: 350px;"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">抖快重点机型分布Mix</div>
+                <div id="dk-model-mix-chart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dashboardData = {"1月":{"month":"1月","month_num":1,"last_day":31,"targets":{"总目标":47.5,"官网":7.0,"天猫":23.5,"京东官旗":5.0,"抖快":12.0},"actual_total":27.1,"achievement_rate":57.0,"channels":{"官网":5.9,"天猫":9.9,"京东官旗":2.5,"抖快":3.2},"channel_targets":{"官网":7.0,"天猫":23.5,"京东官旗":5.0,"抖快":12.0},"store_mix":{"天猫":9.9,"官网":5.9,"国代":5.7,"抖快":3.2,"京东官旗":2.5},"models":{"sales":{"小新平板11":15458,"拯救者Y700 4代":6078,"PadProGT":3247,"PadPro12.7":1426,"小新平板12.1":484,"小新pad 2023":291,"小新pad 2024":38,"YogaPadPro 14.5":36,"拯救者Y700 3代":11,"Pad Studio":6,"小新pad plus 2023":6,"Pad Pro12.7":5,"YogaPadPro 12.7":4,"Pad 2024 舒视版":2,"Y700 2代":2,"Pad 2024 舒视智学版":1,"Pad Pro12.7 类纸屏":1,"拯救者Y700 3代 超控版":1},"key_models":{"小新平板11":15458,"小新平板12.1":484,"PadProGT":3247,"拯救者Y700 4代":6078,"Y700 五代":0,"PadPro12.7":1426},"daily_avg":{"小新平板11":499,"小新平板12.1":16,"PadProGT":105,"拯救者Y700 4代":196,"Y700 五代":0,"PadPro12.7":46}},"daily":{"2026-01-01":459,"2026-01-02":304,"2026-01-03":331,"2026-01-04":359,"2026-01-05":341,"2026-01-06":459,"2026-01-07":699,"2026-01-08":925,"2026-01-09":781,"2026-01-10":845,"2026-01-11":771,"2026-01-12":819,"2026-01-13":780,"2026-01-14":756,"2026-01-15":803,"2026-01-16":967,"2026-01-17":1019,"2026-01-18":1127,"2026-01-19":1016,"2026-01-20":985,"2026-01-21":1090,"2026-01-22":1061,"2026-01-23":1186,"2026-01-24":1074,"2026-01-25":1043,"2026-01-26":979,"2026-01-27":1077,"2026-01-28":1475,"2026-01-29":1346,"2026-01-30":1157,"2026-01-31":1064},"channel_daily":{"官网":{"2026-01-01":95,"2026-01-02":58,"2026-01-03":62,"2026-01-04":74,"2026-01-05":72,"2026-01-06":59,"2026-01-07":98,"2026-01-08":230,"2026-01-09":146,"2026-01-10":171,"2026-01-11":175,"2026-01-12":202,"2026-01-13":166,"2026-01-14":168,"2026-01-15":166,"2026-01-16":155,"2026-01-17":158,"2026-01-18":148,"2026-01-19":160,"2026-01-20":116,"2026-01-21":161,"2026-01-22":145,"2026-01-23":117,"2026-01-24":137,"2026-01-25":209,"2026-01-26":265,"2026-01-27":369,"2026-01-28":642,"2026-01-29":567,"2026-01-30":382,"2026-01-31":233},"天猫":{"2026-01-01":171,"2026-01-02":94,"2026-01-03":101,"2026-01-04":102,"2026-01-05":138,"2026-01-06":193,"2026-01-07":312,"2026-01-08":362,"2026-01-09":334,"2026-01-10":345,"2026-01-11":286,"2026-01-12":290,"2026-01-13":304,"2026-01-14":323,"2026-01-15":331,"2026-01-16":418,"2026-01-17":441,"2026-01-18":370,"2026-01-19":322,"2026-01-20":358,"2026-01-21":412,"2026-01-22":402,"2026-01-23":408,"2026-01-24":361,"2026-01-25":389,"2026-01-26":387,"2026-01-27":417,"2026-01-28":446,"2026-01-29":355,"2026-01-30":332,"2026-01-31":375},"京东官旗":{"2026-01-01":47,"2026-01-02":22,"2026-01-03":21,"2026-01-04":38,"2026-01-05":24,"2026-01-06":33,"2026-01-07":46,"2026-01-08":45,"2026-01-09":35,"2026-01-10":56,"2026-01-11":36,"2026-01-12":50,"2026-01-13":66,"2026-01-14":31,"2026-01-15":47,"2026-01-16":49,"2026-01-17":70,"2026-01-18":111,"2026-01-19":143,"2026-01-20":101,"2026-01-21":90,"2026-01-22":124,"2026-01-23":131,"2026-01-24":104,"2026-01-25":135,"2026-01-26":112,"2026-01-27":92,"2026-01-28":125,"2026-01-29":140,"2026-01-30":164,"2026-01-31":181},"抖快":{"2026-01-01":42,"2026-01-02":39,"2026-01-03":45,"2026-01-04":49,"2026-01-05":39,"2026-01-06":51,"2026-01-07":39,"2026-01-08":49,"2026-01-09":51,"2026-01-10":53,"2026-01-11":61,"2026-01-12":78,"2026-01-13":59,"2026-01-14":60,"2026-01-15":58,"2026-01-16":62,"2026-01-17":82,"2026-01-18":178,"2026-01-19":133,"2026-01-20":144,"2026-01-21":127,"2026-01-22":139,"2026-01-23":279,"2026-01-24":316,"2026-01-25":193,"2026-01-26":113,"2026-01-27":107,"2026-01-28":141,"2026-01-29":139,"2026-01-30":120,"2026-01-31":122}},"days_count":31,"last_7_avg":1163,"monthly_avg":874,"model_channel_daily":{"小新平板11":{"官网":{"2026-01-01":55,"2026-01-02":33,"2026-01-03":45,"2026-01-04":55,"2026-01-05":56,"2026-01-06":42,"2026-01-07":76,"2026-01-08":207,"2026-01-09":130,"2026-01-10":151,"2026-01-11":158,"2026-01-12":195,"2026-01-13":144,"2026-01-14":153,"2026-01-15":134,"2026-01-16":145,"2026-01-17":127,"2026-01-18":122,"2026-01-19":141,"2026-01-20":91,"2026-01-21":131,"2026-01-22":122,"2026-01-23":88,"2026-01-24":106,"2026-01-25":145,"2026-01-26":192,"2026-01-27":300,"2026-01-28":589,"2026-01-29":503,"2026-01-30":270,"2026-01-31":135},"天猫":{"2026-01-01":82,"2026-01-02":56,"2026-01-03":61,"2026-01-04":58,"2026-01-05":95,"2026-01-06":141,"2026-01-07":256,"2026-01-08":275,"2026-01-09":266,"2026-01-10":255,"2026-01-11":224,"2026-01-12":208,"2026-01-13":238,"2026-01-14":246,"2026-01-15":229,"2026-01-16":313,"2026-01-17":330,"2026-01-18":286,"2026-01-19":250,"2026-01-20":280,"2026-01-21":316,"2026-01-22":291,"2026-01-23":302,"2026-01-24":252,"2026-01-25":240,"2026-01-26":254,"2026-01-27":295,"2026-01-28":295,"2026-01-29":211,"2026-01-30":156,"2026-01-31":163},"京东官旗":{"2026-01-01":28,"2026-01-02":11,"2026-01-03":13,"2026-01-04":23,"2026-01-05":22,"2026-01-06":29,"2026-01-07":40,"2026-01-08":42,"2026-01-09":25,"2026-01-10":42,"2026-01-11":33,"2026-01-12":39,"2026-01-13":49,"2026-01-14":29,"2026-01-15":40,"2026-01-16":43,"2026-01-17":55,"2026-01-18":85,"2026-01-19":111,"2026-01-20":74,"2026-01-21":63,"2026-01-22":91,"2026-01-23":96,"2026-01-24":70,"2026-01-25":94,"2026-01-26":86,"2026-01-27":64,"2026-01-28":77,"2026-01-29":92,"2026-01-30":113,"2026-01-31":109},"抖快":{"2026-01-01":9,"2026-01-02":9,"2026-01-03":21,"2026-01-04":15,"2026-01-05":21,"2026-01-06":34,"2026-01-07":17,"2026-01-08":23,"2026-01-09":23,"2026-01-10":20,"2026-01-11":24,"2026-01-12":52,"2026-01-13":40,"2026-01-14":39,"2026-01-15":29,"2026-01-16":32,"2026-01-17":59,"2026-01-18":121,"2026-01-19":86,"2026-01-20":74,"2026-01-21":65,"2026-01-22":37,"2026-01-23":199,"2026-01-24":256,"2026-01-25":121,"2026-01-26":54,"2026-01-27":33,"2026-01-28":56,"2026-01-29":54,"2026-01-30":34,"2026-01-31":27}},"小新平板12.1":{"官网":{"2026-01-01":1,"2026-01-02":1,"2026-01-03":0,"2026-01-04":1,"2026-01-05":0,"2026-01-06":1,"2026-01-07":0,"2026-01-08":1,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":1,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":1,"2026-01-24":1,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":2,"2026-01-31":1},"天猫":{"2026-01-01":1,"2026-01-02":0,"2026-01-03":0,"2026-01-04":4,"2026-01-05":4,"2026-01-06":0,"2026-01-07":3,"2026-01-08":3,"2026-01-09":1,"2026-01-10":1,"2026-01-11":1,"2026-01-12":4,"2026-01-13":2,"2026-01-14":1,"2026-01-15":1,"2026-01-16":2,"2026-01-17":6,"2026-01-18":2,"2026-01-19":0,"2026-01-20":2,"2026-01-21":1,"2026-01-22":3,"2026-01-23":4,"2026-01-24":22,"2026-01-25":44,"2026-01-26":51,"2026-01-27":52,"2026-01-28":51,"2026-01-29":31,"2026-01-30":51,"2026-01-31":60},"京东官旗":{"2026-01-01":1,"2026-01-02":1,"2026-01-03":1,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":1,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":1,"2026-01-24":3,"2026-01-25":1,"2026-01-26":2,"2026-01-27":5,"2026-01-28":9,"2026-01-29":4,"2026-01-30":6,"2026-01-31":6},"抖快":{"2026-01-01":0,"2026-01-02":1,"2026-01-03":0,"2026-01-04":0,"2026-01-05":1,"2026-01-06":1,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":1,"2026-01-20":1,"2026-01-21":1,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":1,"2026-01-29":0,"2026-01-30":4,"2026-01-31":1}},"PadProGT":{"官网":{"2026-01-01":19,"2026-01-02":13,"2026-01-03":3,"2026-01-04":5,"2026-01-05":7,"2026-01-06":3,"2026-01-07":8,"2026-01-08":8,"2026-01-09":2,"2026-01-10":9,"2026-01-11":2,"2026-01-12":2,"2026-01-13":3,"2026-01-14":3,"2026-01-15":14,"2026-01-16":3,"2026-01-17":10,"2026-01-18":10,"2026-01-19":7,"2026-01-20":3,"2026-01-21":8,"2026-01-22":6,"2026-01-23":5,"2026-01-24":7,"2026-01-25":15,"2026-01-26":25,"2026-01-27":34,"2026-01-28":23,"2026-01-29":42,"2026-01-30":71,"2026-01-31":48},"天猫":{"2026-01-01":37,"2026-01-02":14,"2026-01-03":20,"2026-01-04":12,"2026-01-05":19,"2026-01-06":23,"2026-01-07":27,"2026-01-08":35,"2026-01-09":27,"2026-01-10":37,"2026-01-11":28,"2026-01-12":27,"2026-01-13":23,"2026-01-14":23,"2026-01-15":39,"2026-01-16":42,"2026-01-17":39,"2026-01-18":27,"2026-01-19":35,"2026-01-20":34,"2026-01-21":33,"2026-01-22":31,"2026-01-23":24,"2026-01-24":32,"2026-01-25":19,"2026-01-26":19,"2026-01-27":15,"2026-01-28":24,"2026-01-29":37,"2026-01-30":35,"2026-01-31":39},"京东官旗":{"2026-01-01":5,"2026-01-02":4,"2026-01-03":5,"2026-01-04":6,"2026-01-05":1,"2026-01-06":3,"2026-01-07":4,"2026-01-08":2,"2026-01-09":8,"2026-01-10":12,"2026-01-11":2,"2026-01-12":10,"2026-01-13":14,"2026-01-14":1,"2026-01-15":3,"2026-01-16":4,"2026-01-17":9,"2026-01-18":22,"2026-01-19":27,"2026-01-20":23,"2026-01-21":25,"2026-01-22":31,"2026-01-23":29,"2026-01-24":29,"2026-01-25":39,"2026-01-26":23,"2026-01-27":20,"2026-01-28":34,"2026-01-29":41,"2026-01-30":39,"2026-01-31":59},"抖快":{"2026-01-01":19,"2026-01-02":15,"2026-01-03":15,"2026-01-04":18,"2026-01-05":11,"2026-01-06":10,"2026-01-07":15,"2026-01-08":16,"2026-01-09":23,"2026-01-10":25,"2026-01-11":22,"2026-01-12":18,"2026-01-13":12,"2026-01-14":15,"2026-01-15":21,"2026-01-16":25,"2026-01-17":16,"2026-01-18":40,"2026-01-19":26,"2026-01-20":20,"2026-01-21":24,"2026-01-22":35,"2026-01-23":18,"2026-01-24":15,"2026-01-25":28,"2026-01-26":10,"2026-01-27":13,"2026-01-28":22,"2026-01-29":25,"2026-01-30":36,"2026-01-31":24}},"拯救者Y700 4代":{"官网":{"2026-01-01":2,"2026-01-02":1,"2026-01-03":0,"2026-01-04":3,"2026-01-05":2,"2026-01-06":4,"2026-01-07":2,"2026-01-08":2,"2026-01-09":3,"2026-01-10":1,"2026-01-11":7,"2026-01-12":1,"2026-01-13":5,"2026-01-14":5,"2026-01-15":5,"2026-01-16":3,"2026-01-17":4,"2026-01-18":5,"2026-01-19":5,"2026-01-20":3,"2026-01-21":7,"2026-01-22":8,"2026-01-23":11,"2026-01-24":9,"2026-01-25":38,"2026-01-26":40,"2026-01-27":29,"2026-01-28":21,"2026-01-29":14,"2026-01-30":30,"2026-01-31":36},"天猫":{"2026-01-01":16,"2026-01-02":8,"2026-01-03":11,"2026-01-04":11,"2026-01-05":13,"2026-01-06":12,"2026-01-07":12,"2026-01-08":24,"2026-01-09":19,"2026-01-10":30,"2026-01-11":11,"2026-01-12":29,"2026-01-13":21,"2026-01-14":23,"2026-01-15":26,"2026-01-16":22,"2026-01-17":22,"2026-01-18":27,"2026-01-19":16,"2026-01-20":20,"2026-01-21":23,"2026-01-22":32,"2026-01-23":35,"2026-01-24":26,"2026-01-25":37,"2026-01-26":24,"2026-01-27":23,"2026-01-28":29,"2026-01-29":26,"2026-01-30":34,"2026-01-31":37},"京东官旗":{"2026-01-01":7,"2026-01-02":3,"2026-01-03":0,"2026-01-04":4,"2026-01-05":0,"2026-01-06":0,"2026-01-07":1,"2026-01-08":0,"2026-01-09":1,"2026-01-10":1,"2026-01-11":1,"2026-01-12":1,"2026-01-13":3,"2026-01-14":1,"2026-01-15":2,"2026-01-16":1,"2026-01-17":4,"2026-01-18":2,"2026-01-19":3,"2026-01-20":1,"2026-01-21":0,"2026-01-22":0,"2026-01-23":2,"2026-01-24":0,"2026-01-25":1,"2026-01-26":0,"2026-01-27":1,"2026-01-28":0,"2026-01-29":0,"2026-01-30":4,"2026-01-31":0},"抖快":{"2026-01-01":5,"2026-01-02":6,"2026-01-03":6,"2026-01-04":6,"2026-01-05":4,"2026-01-06":4,"2026-01-07":6,"2026-01-08":3,"2026-01-09":1,"2026-01-10":3,"2026-01-11":6,"2026-01-12":2,"2026-01-13":4,"2026-01-14":3,"2026-01-15":4,"2026-01-16":3,"2026-01-17":5,"2026-01-18":11,"2026-01-19":16,"2026-01-20":43,"2026-01-21":33,"2026-01-22":49,"2026-01-23":35,"2026-01-24":19,"2026-01-25":22,"2026-01-26":23,"2026-01-27":36,"2026-01-28":37,"2026-01-29":31,"2026-01-30":12,"2026-01-31":32}},"Y700 五代":{"官网":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0},"天猫":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0},"京东官旗":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0},"抖快":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0}},"PadPro12.7":{"官网":{"2026-01-01":3,"2026-01-02":1,"2026-01-03":2,"2026-01-04":3,"2026-01-05":2,"2026-01-06":1,"2026-01-07":0,"2026-01-08":2,"2026-01-09":2,"2026-01-10":1,"2026-01-11":1,"2026-01-12":1,"2026-01-13":3,"2026-01-14":0,"2026-01-15":5,"2026-01-16":0,"2026-01-17":1,"2026-01-18":1,"2026-01-19":1,"2026-01-20":2,"2026-01-21":1,"2026-01-22":0,"2026-01-23":4,"2026-01-24":2,"2026-01-25":2,"2026-01-26":2,"2026-01-27":0,"2026-01-28":2,"2026-01-29":1,"2026-01-30":2,"2026-01-31":2},"天猫":{"2026-01-01":31,"2026-01-02":15,"2026-01-03":9,"2026-01-04":14,"2026-01-05":5,"2026-01-06":15,"2026-01-07":11,"2026-01-08":25,"2026-01-09":20,"2026-01-10":21,"2026-01-11":22,"2026-01-12":20,"2026-01-13":18,"2026-01-14":28,"2026-01-15":36,"2026-01-16":37,"2026-01-17":43,"2026-01-18":28,"2026-01-19":18,"2026-01-20":20,"2026-01-21":38,"2026-01-22":45,"2026-01-23":43,"2026-01-24":29,"2026-01-25":49,"2026-01-26":36,"2026-01-27":32,"2026-01-28":47,"2026-01-29":49,"2026-01-30":52,"2026-01-31":76},"京东官旗":{"2026-01-01":5,"2026-01-02":2,"2026-01-03":2,"2026-01-04":1,"2026-01-05":0,"2026-01-06":1,"2026-01-07":0,"2026-01-08":0,"2026-01-09":1,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":2,"2026-01-16":0,"2026-01-17":1,"2026-01-18":1,"2026-01-19":2,"2026-01-20":3,"2026-01-21":0,"2026-01-22":1,"2026-01-23":3,"2026-01-24":0,"2026-01-25":0,"2026-01-26":1,"2026-01-27":1,"2026-01-28":4,"2026-01-29":2,"2026-01-30":1,"2026-01-31":6},"抖快":{"2026-01-01":8,"2026-01-02":6,"2026-01-03":3,"2026-01-04":8,"2026-01-05":2,"2026-01-06":2,"2026-01-07":1,"2026-01-08":7,"2026-01-09":4,"2026-01-10":4,"2026-01-11":9,"2026-01-12":4,"2026-01-13":2,"2026-01-14":3,"2026-01-15":4,"2026-01-16":2,"2026-01-17":2,"2026-01-18":6,"2026-01-19":2,"2026-01-20":5,"2026-01-21":4,"2026-01-22":18,"2026-01-23":27,"2026-01-24":25,"2026-01-25":22,"2026-01-26":26,"2026-01-27":24,"2026-01-28":25,"2026-01-29":29,"2026-01-30":34,"2026-01-31":38}}},"channel_model_mix":{"官网":{"小新平板11":4841,"PadProGT":418,"拯救者Y700 4代":306,"小新pad 2023":222,"PadPro12.7":50,"YogaPadPro 14.5":25,"小新pad 2024":25,"小新平板12.1":11,"拯救者Y700 3代":3,"Pad 2024 舒视版":2,"Pad Pro12.7 类纸屏":1,"Y700 2代":1},"天猫":{"小新平板11":6924,"PadPro12.7":932,"PadProGT":876,"拯救者Y700 4代":699,"小新平板12.1":408,"小新pad 2023":21,"YogaPadPro 14.5":7,"YogaPadPro 12.7":4,"小新pad 2024":4,"拯救者Y700 3代":3,"拯救者Y700 3代 超控版":1},"京东官旗":{"小新平板11":1788,"PadProGT":534,"拯救者Y700 4代":44,"小新平板12.1":41,"PadPro12.7":40,"小新pad 2023":13,"Pad Pro12.7":5,"YogaPadPro 14.5":3,"Pad 2024 舒视智学版":1},"抖快":{"小新平板11":1684,"PadProGT":632,"拯救者Y700 4代":470,"PadPro12.7":356,"小新平板12.1":12,"小新pad plus 2023":6,"拯救者Y700 3代":3,"小新pad 2024":2,"Y700 2代":1,"YogaPadPro 14.5":1,"小新pad 2023":1}},"model_daily":{"小新平板11":{"2026-01-01":187,"2026-01-02":120,"2026-01-03":146,"2026-01-04":151,"2026-01-05":194,"2026-01-06":246,"2026-01-07":389,"2026-01-08":547,"2026-01-09":444,"2026-01-10":468,"2026-01-11":440,"2026-01-12":494,"2026-01-13":473,"2026-01-14":475,"2026-01-15":440,"2026-01-16":544,"2026-01-17":591,"2026-01-18":620,"2026-01-19":591,"2026-01-20":523,"2026-01-21":581,"2026-01-22":546,"2026-01-23":700,"2026-01-24":690,"2026-01-25":602,"2026-01-26":595,"2026-01-27":699,"2026-01-28":1046,"2026-01-29":871,"2026-01-30":598,"2026-01-31":447},"小新平板12.1":{"2026-01-01":3,"2026-01-02":3,"2026-01-03":2,"2026-01-04":5,"2026-01-05":5,"2026-01-06":2,"2026-01-07":3,"2026-01-08":4,"2026-01-09":2,"2026-01-10":1,"2026-01-11":2,"2026-01-12":4,"2026-01-13":2,"2026-01-14":2,"2026-01-15":3,"2026-01-16":2,"2026-01-17":7,"2026-01-18":3,"2026-01-19":1,"2026-01-20":3,"2026-01-21":6,"2026-01-22":3,"2026-01-23":6,"2026-01-24":26,"2026-01-25":45,"2026-01-26":53,"2026-01-27":59,"2026-01-28":61,"2026-01-29":35,"2026-01-30":63,"2026-01-31":68},"PadProGT":{"2026-01-01":144,"2026-01-02":112,"2026-01-03":134,"2026-01-04":133,"2026-01-05":98,"2026-01-06":117,"2026-01-07":106,"2026-01-08":95,"2026-01-09":89,"2026-01-10":93,"2026-01-11":70,"2026-01-12":74,"2026-01-13":67,"2026-01-14":50,"2026-01-15":86,"2026-01-16":91,"2026-01-17":97,"2026-01-18":137,"2026-01-19":115,"2026-01-20":93,"2026-01-21":98,"2026-01-22":107,"2026-01-23":85,"2026-01-24":83,"2026-01-25":104,"2026-01-26":82,"2026-01-27":82,"2026-01-28":105,"2026-01-29":146,"2026-01-30":182,"2026-01-31":172},"拯救者Y700 4代":{"2026-01-01":31,"2026-01-02":18,"2026-01-03":17,"2026-01-04":25,"2026-01-05":23,"2026-01-06":62,"2026-01-07":172,"2026-01-08":231,"2026-01-09":208,"2026-01-10":242,"2026-01-11":218,"2026-01-12":212,"2026-01-13":201,"2026-01-14":188,"2026-01-15":218,"2026-01-16":282,"2026-01-17":255,"2026-01-18":320,"2026-01-19":274,"2026-01-20":312,"2026-01-21":344,"2026-01-22":330,"2026-01-23":306,"2026-01-24":202,"2026-01-25":210,"2026-01-26":173,"2026-01-27":171,"2026-01-28":177,"2026-01-29":202,"2026-01-30":212,"2026-01-31":242},"Y700 五代":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0},"PadPro12.7":{"2026-01-01":65,"2026-01-02":36,"2026-01-03":19,"2026-01-04":29,"2026-01-05":10,"2026-01-06":19,"2026-01-07":12,"2026-01-08":34,"2026-01-09":27,"2026-01-10":27,"2026-01-11":32,"2026-01-12":27,"2026-01-13":23,"2026-01-14":31,"2026-01-15":47,"2026-01-16":39,"2026-01-17":48,"2026-01-18":36,"2026-01-19":24,"2026-01-20":32,"2026-01-21":43,"2026-01-22":64,"2026-01-23":78,"2026-01-24":56,"2026-01-25":73,"2026-01-26":66,"2026-01-27":58,"2026-01-28":78,"2026-01-29":81,"2026-01-30":89,"2026-01-31":123}}},"2月":{"month":"2月","month_num":2,"last_day":28,"targets":{"总目标":47.5,"官网":7.0,"天猫":23.5,"京东官旗":5.0,"抖快":12.0},"actual_total":19.3,"achievement_rate":40.7,"channels":{"官网":4.8,"天猫":7.3,"京东官旗":3.4,"抖快":3.8},"channel_targets":{"官网":7.0,"天猫":23.5,"京东官旗":5.0,"抖快":12.0},"store_mix":{"天猫":7.3,"官网":4.8,"国代":0.0,"抖快":3.8,"京东官旗":3.4},"models":{"sales":{"小新平板11":8972,"PadProGT":3640,"拯救者Y700 4代":2999,"PadPro12.7":2574,"小新平板12.1":793,"小新pad 2023":217,"YogaPadPro 14.5":57,"小新pad 2024":53,"Pad Pro12.7":11,"Pad Studio":8,"拯救者Y700 3代":7,"小新pad plus 2023":4,"Y700 五代":3,"Pad 2024 舒视版":2,"拯救者Y700 3代 超控版":2,"YogaPadPro 12.7":1},"key_models":{"小新平板11":8972,"小新平板12.1":793,"PadProGT":3640,"拯救者Y700 4代":2999,"Y700 五代":3,"PadPro12.7":2574},"daily_avg":{"小新平板11":320,"小新平板12.1":28,"PadProGT":130,"拯救者Y700 4代":107,"Y700 五代":0,"PadPro12.7":92}},"daily":{"2026-02-01":959,"2026-02-02":974,"2026-02-03":1025,"2026-02-04":917,"2026-02-05":872,"2026-02-06":926,"2026-02-07":1030,"2026-02-08":995,"2026-02-09":958,"2026-02-10":824,"2026-02-11":831,"2026-02-12":870,"2026-02-13":838,"2026-02-14":746,"2026-02-15":671,"2026-02-16":446,"2026-02-17":236,"2026-02-18":292,"2026-02-19":343,"2026-02-20":348,"2026-02-21":300,"2026-02-22":292,"2026-02-23":296,"2026-02-24":467,"2026-02-25":624,"2026-02-26":756,"2026-02-27":707,"2026-02-28":806},"channel_daily":{"官网":{"2026-02-01":168,"2026-02-02":179,"2026-02-03":203,"2026-02-04":109,"2026-02-05":119,"2026-02-06":130,"2026-02-07":203,"2026-02-08":218,"2026-02-09":161,"2026-02-10":136,"2026-02-11":150,"2026-02-12":139,"2026-02-13":156,"2026-02-14":171,"2026-02-15":159,"2026-02-16":119,"2026-02-17":94,"2026-02-18":105,"2026-02-19":158,"2026-02-20":147,"2026-02-21":97,"2026-02-22":82,"2026-02-23":73,"2026-02-24":128,"2026-02-25":215,"2026-02-26":418,"2026-02-27":378,"2026-02-28":366},"天猫":{"2026-02-01":371,"2026-02-02":380,"2026-02-03":412,"2026-02-04":332,"2026-02-05":342,"2026-02-06":341,"2026-02-07":406,"2026-02-08":419,"2026-02-09":393,"2026-02-10":354,"2026-02-11":343,"2026-02-12":356,"2026-02-13":329,"2026-02-14":273,"2026-02-15":268,"2026-02-16":166,"2026-02-17":70,"2026-02-18":90,"2026-02-19":117,"2026-02-20":117,"2026-02-21":122,"2026-02-22":118,"2026-02-23":137,"2026-02-24":209,"2026-02-25":242,"2026-02-26":176,"2026-02-27":176,"2026-02-28":264},"京东官旗":{"2026-02-01":189,"2026-02-02":184,"2026-02-03":225,"2026-02-04":259,"2026-02-05":210,"2026-02-06":248,"2026-02-07":204,"2026-02-08":198,"2026-02-09":248,"2026-02-10":189,"2026-02-11":181,"2026-02-12":208,"2026-02-13":210,"2026-02-14":168,"2026-02-15":82,"2026-02-16":66,"2026-02-17":14,"2026-02-18":23,"2026-02-19":12,"2026-02-20":25,"2026-02-21":18,"2026-02-22":27,"2026-02-23":33,"2026-02-24":44,"2026-02-25":33,"2026-02-26":23,"2026-02-27":41,"2026-02-28":58},"抖快":{"2026-02-01":231,"2026-02-02":231,"2026-02-03":185,"2026-02-04":217,"2026-02-05":201,"2026-02-06":207,"2026-02-07":217,"2026-02-08":160,"2026-02-09":156,"2026-02-10":145,"2026-02-11":157,"2026-02-12":167,"2026-02-13":143,"2026-02-14":134,"2026-02-15":162,"2026-02-16":95,"2026-02-17":58,"2026-02-18":74,"2026-02-19":56,"2026-02-20":59,"2026-02-21":63,"2026-02-22":65,"2026-02-23":53,"2026-02-24":86,"2026-02-25":134,"2026-02-26":139,"2026-02-27":112,"2026-02-28":118}},"days_count":28,"last_7_avg":564,"monthly_avg":691,"model_channel_daily":{"小新平板11":{"官网":{"2026-02-01":111,"2026-02-02":100,"2026-02-03":111,"2026-02-04":49,"2026-02-05":52,"2026-02-06":49,"2026-02-07":108,"2026-02-08":98,"2026-02-09":78,"2026-02-10":59,"2026-02-11":66,"2026-02-12":46,"2026-02-13":65,"2026-02-14":94,"2026-02-15":86,"2026-02-16":65,"2026-02-17":61,"2026-02-18":65,"2026-02-19":86,"2026-02-20":80,"2026-02-21":50,"2026-02-22":35,"2026-02-23":42,"2026-02-24":82,"2026-02-25":145,"2026-02-26":327,"2026-02-27":256,"2026-02-28":208},"天猫":{"2026-02-01":194,"2026-02-02":170,"2026-02-03":200,"2026-02-04":136,"2026-02-05":145,"2026-02-06":140,"2026-02-07":186,"2026-02-08":199,"2026-02-09":181,"2026-02-10":159,"2026-02-11":182,"2026-02-12":191,"2026-02-13":167,"2026-02-14":151,"2026-02-15":147,"2026-02-16":94,"2026-02-17":41,"2026-02-18":40,"2026-02-19":50,"2026-02-20":56,"2026-02-21":46,"2026-02-22":39,"2026-02-23":59,"2026-02-24":77,"2026-02-25":85,"2026-02-26":65,"2026-02-27":74,"2026-02-28":108},"京东官旗":{"2026-02-01":124,"2026-02-02":100,"2026-02-03":138,"2026-02-04":179,"2026-02-05":137,"2026-02-06":165,"2026-02-07":132,"2026-02-08":128,"2026-02-09":169,"2026-02-10":134,"2026-02-11":135,"2026-02-12":153,"2026-02-13":146,"2026-02-14":117,"2026-02-15":56,"2026-02-16":47,"2026-02-17":11,"2026-02-18":18,"2026-02-19":9,"2026-02-20":16,"2026-02-21":15,"2026-02-22":20,"2026-02-23":23,"2026-02-24":25,"2026-02-25":23,"2026-02-26":14,"2026-02-27":22,"2026-02-28":39},"抖快":{"2026-02-01":21,"2026-02-02":27,"2026-02-03":36,"2026-02-04":29,"2026-02-05":29,"2026-02-06":23,"2026-02-07":36,"2026-02-08":26,"2026-02-09":22,"2026-02-10":20,"2026-02-11":26,"2026-02-12":39,"2026-02-13":27,"2026-02-14":23,"2026-02-15":34,"2026-02-16":22,"2026-02-17":11,"2026-02-18":8,"2026-02-19":7,"2026-02-20":9,"2026-02-21":19,"2026-02-22":14,"2026-02-23":15,"2026-02-24":18,"2026-02-25":24,"2026-02-26":14,"2026-02-27":26,"2026-02-28":16}},"小新平板12.1":{"官网":{"2026-02-01":2,"2026-02-02":0,"2026-02-03":0,"2026-02-04":3,"2026-02-05":2,"2026-02-06":2,"2026-02-07":1,"2026-02-08":4,"2026-02-09":3,"2026-02-10":3,"2026-02-11":1,"2026-02-12":7,"2026-02-13":0,"2026-02-14":2,"2026-02-15":1,"2026-02-16":0,"2026-02-17":1,"2026-02-18":1,"2026-02-19":1,"2026-02-20":1,"2026-02-21":0,"2026-02-22":1,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":1,"2026-02-27":1,"2026-02-28":0},"天猫":{"2026-02-01":46,"2026-02-02":71,"2026-02-03":67,"2026-02-04":63,"2026-02-05":54,"2026-02-06":47,"2026-02-07":59,"2026-02-08":55,"2026-02-09":45,"2026-02-10":23,"2026-02-11":6,"2026-02-12":6,"2026-02-13":10,"2026-02-14":8,"2026-02-15":8,"2026-02-16":4,"2026-02-17":3,"2026-02-18":2,"2026-02-19":2,"2026-02-20":2,"2026-02-21":1,"2026-02-22":1,"2026-02-23":0,"2026-02-24":1,"2026-02-25":4,"2026-02-26":2,"2026-02-27":6,"2026-02-28":2},"京东官旗":{"2026-02-01":4,"2026-02-02":6,"2026-02-03":8,"2026-02-04":6,"2026-02-05":2,"2026-02-06":15,"2026-02-07":11,"2026-02-08":12,"2026-02-09":17,"2026-02-10":11,"2026-02-11":9,"2026-02-12":3,"2026-02-13":3,"2026-02-14":0,"2026-02-15":1,"2026-02-16":2,"2026-02-17":1,"2026-02-18":1,"2026-02-19":0,"2026-02-20":0,"2026-02-21":1,"2026-02-22":0,"2026-02-23":1,"2026-02-24":1,"2026-02-25":0,"2026-02-26":1,"2026-02-27":2,"2026-02-28":4},"抖快":{"2026-02-01":1,"2026-02-02":1,"2026-02-03":0,"2026-02-04":1,"2026-02-05":4,"2026-02-06":4,"2026-02-07":3,"2026-02-08":5,"2026-02-09":3,"2026-02-10":5,"2026-02-11":3,"2026-02-12":2,"2026-02-13":1,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":1,"2026-02-21":1,"2026-02-22":0,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0}},"PadProGT":{"官网":{"2026-02-01":29,"2026-02-02":32,"2026-02-03":25,"2026-02-04":18,"2026-02-05":23,"2026-02-06":25,"2026-02-07":39,"2026-02-08":73,"2026-02-09":38,"2026-02-10":29,"2026-02-11":44,"2026-02-12":52,"2026-02-13":46,"2026-02-14":40,"2026-02-15":24,"2026-02-16":12,"2026-02-17":4,"2026-02-18":5,"2026-02-19":12,"2026-02-20":9,"2026-02-21":14,"2026-02-22":11,"2026-02-23":11,"2026-02-24":25,"2026-02-25":51,"2026-02-26":52,"2026-02-27":72,"2026-02-28":116},"天猫":{"2026-02-01":39,"2026-02-02":39,"2026-02-03":39,"2026-02-04":42,"2026-02-05":45,"2026-02-06":46,"2026-02-07":53,"2026-02-08":52,"2026-02-09":54,"2026-02-10":48,"2026-02-11":58,"2026-02-12":47,"2026-02-13":56,"2026-02-14":32,"2026-02-15":39,"2026-02-16":19,"2026-02-17":9,"2026-02-18":8,"2026-02-19":15,"2026-02-20":14,"2026-02-21":20,"2026-02-22":19,"2026-02-23":25,"2026-02-24":36,"2026-02-25":38,"2026-02-26":23,"2026-02-27":28,"2026-02-28":73},"京东官旗":{"2026-02-01":56,"2026-02-02":74,"2026-02-03":73,"2026-02-04":73,"2026-02-05":68,"2026-02-06":64,"2026-02-07":58,"2026-02-08":57,"2026-02-09":60,"2026-02-10":43,"2026-02-11":32,"2026-02-12":46,"2026-02-13":57,"2026-02-14":45,"2026-02-15":21,"2026-02-16":15,"2026-02-17":2,"2026-02-18":2,"2026-02-19":3,"2026-02-20":4,"2026-02-21":1,"2026-02-22":4,"2026-02-23":7,"2026-02-24":12,"2026-02-25":2,"2026-02-26":3,"2026-02-27":7,"2026-02-28":9},"抖快":{"2026-02-01":49,"2026-02-02":38,"2026-02-03":43,"2026-02-04":38,"2026-02-05":47,"2026-02-06":41,"2026-02-07":39,"2026-02-08":40,"2026-02-09":40,"2026-02-10":43,"2026-02-11":35,"2026-02-12":45,"2026-02-13":26,"2026-02-14":20,"2026-02-15":31,"2026-02-16":13,"2026-02-17":7,"2026-02-18":15,"2026-02-19":10,"2026-02-20":11,"2026-02-21":16,"2026-02-22":22,"2026-02-23":15,"2026-02-24":27,"2026-02-25":33,"2026-02-26":24,"2026-02-27":8,"2026-02-28":19}},"拯救者Y700 4代":{"官网":{"2026-02-01":22,"2026-02-02":33,"2026-02-03":45,"2026-02-04":31,"2026-02-05":30,"2026-02-06":39,"2026-02-07":41,"2026-02-08":35,"2026-02-09":28,"2026-02-10":20,"2026-02-11":20,"2026-02-12":22,"2026-02-13":31,"2026-02-14":25,"2026-02-15":39,"2026-02-16":34,"2026-02-17":21,"2026-02-18":26,"2026-02-19":54,"2026-02-20":53,"2026-02-21":29,"2026-02-22":21,"2026-02-23":13,"2026-02-24":14,"2026-02-25":16,"2026-02-26":17,"2026-02-27":33,"2026-02-28":27},"天猫":{"2026-02-01":29,"2026-02-02":29,"2026-02-03":23,"2026-02-04":31,"2026-02-05":33,"2026-02-06":28,"2026-02-07":28,"2026-02-08":30,"2026-02-09":37,"2026-02-10":46,"2026-02-11":36,"2026-02-12":32,"2026-02-13":34,"2026-02-14":25,"2026-02-15":24,"2026-02-16":14,"2026-02-17":8,"2026-02-18":11,"2026-02-19":11,"2026-02-20":11,"2026-02-21":20,"2026-02-22":17,"2026-02-23":12,"2026-02-24":32,"2026-02-25":25,"2026-02-26":36,"2026-02-27":31,"2026-02-28":46},"京东官旗":{"2026-02-01":1,"2026-02-02":0,"2026-02-03":3,"2026-02-04":0,"2026-02-05":1,"2026-02-06":1,"2026-02-07":0,"2026-02-08":0,"2026-02-09":1,"2026-02-10":0,"2026-02-11":1,"2026-02-12":2,"2026-02-13":2,"2026-02-14":1,"2026-02-15":2,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":2,"2026-02-21":0,"2026-02-22":0,"2026-02-23":0,"2026-02-24":1,"2026-02-25":1,"2026-02-26":2,"2026-02-27":3,"2026-02-28":2},"抖快":{"2026-02-01":125,"2026-02-02":106,"2026-02-03":60,"2026-02-04":91,"2026-02-05":73,"2026-02-06":91,"2026-02-07":96,"2026-02-08":50,"2026-02-09":33,"2026-02-10":32,"2026-02-11":25,"2026-02-12":22,"2026-02-13":25,"2026-02-14":37,"2026-02-15":60,"2026-02-16":37,"2026-02-17":21,"2026-02-18":45,"2026-02-19":27,"2026-02-20":17,"2026-02-21":9,"2026-02-22":13,"2026-02-23":12,"2026-02-24":22,"2026-02-25":60,"2026-02-26":88,"2026-02-27":62,"2026-02-28":76}},"Y700 五代":{"官网":{"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":0,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0},"天猫":{"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":3,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0},"京东官旗":{"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":0,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0},"抖快":{"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":0,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0}},"PadPro12.7":{"官网":{"2026-02-01":2,"2026-02-02":2,"2026-02-03":0,"2026-02-04":0,"2026-02-05":1,"2026-02-06":1,"2026-02-07":1,"2026-02-08":2,"2026-02-09":0,"2026-02-10":14,"2026-02-11":8,"2026-02-12":4,"2026-02-13":3,"2026-02-14":5,"2026-02-15":2,"2026-02-16":3,"2026-02-17":1,"2026-02-18":3,"2026-02-19":0,"2026-02-20":2,"2026-02-21":0,"2026-02-22":1,"2026-02-23":0,"2026-02-24":4,"2026-02-25":0,"2026-02-26":3,"2026-02-27":1,"2026-02-28":1},"天猫":{"2026-02-01":61,"2026-02-02":69,"2026-02-03":81,"2026-02-04":56,"2026-02-05":64,"2026-02-06":76,"2026-02-07":79,"2026-02-08":80,"2026-02-09":74,"2026-02-10":78,"2026-02-11":58,"2026-02-12":80,"2026-02-13":57,"2026-02-14":57,"2026-02-15":48,"2026-02-16":33,"2026-02-17":9,"2026-02-18":26,"2026-02-19":38,"2026-02-20":31,"2026-02-21":34,"2026-02-22":38,"2026-02-23":41,"2026-02-24":63,"2026-02-25":89,"2026-02-26":49,"2026-02-27":35,"2026-02-28":35},"京东官旗":{"2026-02-01":2,"2026-02-02":3,"2026-02-03":2,"2026-02-04":0,"2026-02-05":2,"2026-02-06":1,"2026-02-07":3,"2026-02-08":1,"2026-02-09":1,"2026-02-10":1,"2026-02-11":3,"2026-02-12":3,"2026-02-13":2,"2026-02-14":3,"2026-02-15":1,"2026-02-16":2,"2026-02-17":0,"2026-02-18":1,"2026-02-19":0,"2026-02-20":2,"2026-02-21":0,"2026-02-22":3,"2026-02-23":2,"2026-02-24":3,"2026-02-25":4,"2026-02-26":2,"2026-02-27":5,"2026-02-28":2},"抖快":{"2026-02-01":32,"2026-02-02":57,"2026-02-03":44,"2026-02-04":58,"2026-02-05":48,"2026-02-06":45,"2026-02-07":42,"2026-02-08":37,"2026-02-09":57,"2026-02-10":45,"2026-02-11":65,"2026-02-12":58,"2026-02-13":58,"2026-02-14":52,"2026-02-15":35,"2026-02-16":21,"2026-02-17":17,"2026-02-18":4,"2026-02-19":12,"2026-02-20":21,"2026-02-21":17,"2026-02-22":16,"2026-02-23":10,"2026-02-24":19,"2026-02-25":16,"2026-02-26":10,"2026-02-27":15,"2026-02-28":6}}},"channel_model_mix":{"官网":{"小新平板11":2674,"PadProGT":931,"拯救者Y700 4代":819,"小新pad 2023":152,"PadPro12.7":64,"小新pad 2024":48,"YogaPadPro 14.5":43,"小新平板12.1":38,"拯救者Y700 3代":5,"Pad Pro12.7":2,"拯救者Y700 3代 超控版":1},"天猫":{"小新平板11":3382,"PadPro12.7":1539,"PadProGT":1016,"拯救者Y700 4代":739,"小新平板12.1":598,"小新pad 2023":32,"YogaPadPro 14.5":10,"Y700 五代":3,"Pad Pro12.7":2,"小新pad 2024":2},"京东官旗":{"小新平板11":2295,"PadProGT":898,"小新平板12.1":122,"PadPro12.7":54,"拯救者Y700 4代":26,"小新pad 2023":14,"YogaPadPro 14.5":4,"Pad Pro12.7":3,"小新pad 2024":2,"YogaPadPro 12.7":1,"小新pad plus 2023":1},"抖快":{"拯救者Y700 4代":1415,"PadPro12.7":917,"PadProGT":795,"小新平板11":621,"小新平板12.1":35,"小新pad 2023":19,"Pad Studio":8,"Pad Pro12.7":4,"小新pad plus 2023":3,"Pad 2024 舒视版":2,"拯救者Y700 3代":2,"小新pad 2024":1,"拯救者Y700 3代 超控版":1}},"model_daily":{"小新平板11":{"2026-02-01":450,"2026-02-02":397,"2026-02-03":485,"2026-02-04":393,"2026-02-05":363,"2026-02-06":377,"2026-02-07":462,"2026-02-08":451,"2026-02-09":450,"2026-02-10":372,"2026-02-11":409,"2026-02-12":429,"2026-02-13":405,"2026-02-14":385,"2026-02-15":323,"2026-02-16":228,"2026-02-17":124,"2026-02-18":131,"2026-02-19":152,"2026-02-20":161,"2026-02-21":130,"2026-02-22":108,"2026-02-23":139,"2026-02-24":202,"2026-02-25":277,"2026-02-26":420,"2026-02-27":378,"2026-02-28":371},"小新平板12.1":{"2026-02-01":53,"2026-02-02":78,"2026-02-03":75,"2026-02-04":73,"2026-02-05":62,"2026-02-06":68,"2026-02-07":74,"2026-02-08":76,"2026-02-09":68,"2026-02-10":42,"2026-02-11":19,"2026-02-12":18,"2026-02-13":14,"2026-02-14":10,"2026-02-15":10,"2026-02-16":6,"2026-02-17":5,"2026-02-18":4,"2026-02-19":3,"2026-02-20":4,"2026-02-21":3,"2026-02-22":2,"2026-02-23":1,"2026-02-24":2,"2026-02-25":4,"2026-02-26":4,"2026-02-27":9,"2026-02-28":6},"PadProGT":{"2026-02-01":173,"2026-02-02":183,"2026-02-03":180,"2026-02-04":171,"2026-02-05":183,"2026-02-06":176,"2026-02-07":189,"2026-02-08":222,"2026-02-09":192,"2026-02-10":163,"2026-02-11":169,"2026-02-12":190,"2026-02-13":185,"2026-02-14":137,"2026-02-15":115,"2026-02-16":59,"2026-02-17":22,"2026-02-18":30,"2026-02-19":40,"2026-02-20":38,"2026-02-21":51,"2026-02-22":56,"2026-02-23":58,"2026-02-24":100,"2026-02-25":124,"2026-02-26":102,"2026-02-27":115,"2026-02-28":217},"拯救者Y700 4代":{"2026-02-01":177,"2026-02-02":168,"2026-02-03":131,"2026-02-04":153,"2026-02-05":137,"2026-02-06":159,"2026-02-07":165,"2026-02-08":115,"2026-02-09":99,"2026-02-10":98,"2026-02-11":82,"2026-02-12":78,"2026-02-13":92,"2026-02-14":88,"2026-02-15":125,"2026-02-16":85,"2026-02-17":50,"2026-02-18":82,"2026-02-19":92,"2026-02-20":83,"2026-02-21":58,"2026-02-22":51,"2026-02-23":37,"2026-02-24":69,"2026-02-25":102,"2026-02-26":143,"2026-02-27":129,"2026-02-28":151},"Y700 五代":{"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":3,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0},"PadPro12.7":{"2026-02-01":97,"2026-02-02":131,"2026-02-03":127,"2026-02-04":114,"2026-02-05":115,"2026-02-06":123,"2026-02-07":125,"2026-02-08":120,"2026-02-09":132,"2026-02-10":138,"2026-02-11":134,"2026-02-12":145,"2026-02-13":120,"2026-02-14":117,"2026-02-15":86,"2026-02-16":59,"2026-02-17":27,"2026-02-18":34,"2026-02-19":50,"2026-02-20":56,"2026-02-21":51,"2026-02-22":58,"2026-02-23":53,"2026-02-24":89,"2026-02-25":109,"2026-02-26":64,"2026-02-27":56,"2026-02-28":44}}},"3月":{"month":"3月","month_num":3,"last_day":31,"targets":{"总目标":47.5,"官网":7.0,"天猫":23.5,"京东官旗":5.0,"抖快":12.0},"actual_total":31.8,"achievement_rate":67.0,"channels":{"官网":4.8,"天猫":9.2,"京东官旗":2.1,"抖快":4.6},"channel_targets":{"官网":7.0,"天猫":23.5,"京东官旗":5.0,"抖快":12.0},"store_mix":{"天猫":9.2,"官网":4.8,"国代":4.1,"抖快":4.6,"京东官旗":2.1},"models":{"sales":{"小新平板11":7622,"小新平板12.1":6897,"PadProGT":5710,"拯救者Y700 4代":5529,"Y700 五代":3562,"PadPro12.7":2027,"小新pad 2023":192,"小新Pro13":189,"YogaPadPro 14.5":55,"小新pad 2024":23,"Pad Studio":7,"小新pad plus 2023":7,"Y700 2代":1,"Pad Pro12.7":1,"小新ProGT13":1,"拯救者Y700 3代":1},"key_models":{"小新平板11":7622,"小新平板12.1":6897,"PadProGT":5710,"拯救者Y700 4代":5529,"Y700 五代":3562,"PadPro12.7":2027},"daily_avg":{"小新平板11":363,"小新平板12.1":328,"PadProGT":272,"拯救者Y700 4代":263,"Y700 五代":170,"PadPro12.7":97}},"daily":{"2026-03-01":1257,"2026-03-02":1162,"2026-03-03":1086,"2026-03-04":1181,"2026-03-05":1241,"2026-03-06":1313,"2026-03-07":1429,"2026-03-08":1425,"2026-03-09":1289,"2026-03-10":1260,"2026-03-11":2606,"2026-03-12":2020,"2026-03-13":2106,"2026-03-14":932,"2026-03-15":967,"2026-03-16":1078,"2026-03-17":888,"2026-03-18":944,"2026-03-19":1146,"2026-03-20":3463,"2026-03-21":3040},"channel_daily":{"官网":{"2026-03-01":570,"2026-03-02":380,"2026-03-03":195,"2026-03-04":196,"2026-03-05":221,"2026-03-06":201,"2026-03-07":163,"2026-03-08":120,"2026-03-09":129,"2026-03-10":145,"2026-03-11":544,"2026-03-12":338,"2026-03-13":318,"2026-03-14":138,"2026-03-15":111,"2026-03-16":179,"2026-03-17":82,"2026-03-18":72,"2026-03-19":141,"2026-03-20":311,"2026-03-21":260},"天猫":{"2026-03-01":373,"2026-03-02":374,"2026-03-03":380,"2026-03-04":405,"2026-03-05":429,"2026-03-06":420,"2026-03-07":438,"2026-03-08":461,"2026-03-09":372,"2026-03-10":336,"2026-03-11":680,"2026-03-12":490,"2026-03-13":512,"2026-03-14":228,"2026-03-15":222,"2026-03-16":229,"2026-03-17":219,"2026-03-18":221,"2026-03-19":312,"2026-03-20":1208,"2026-03-21":922},"京东官旗":{"2026-03-01":33,"2026-03-02":43,"2026-03-03":84,"2026-03-04":87,"2026-03-05":88,"2026-03-06":88,"2026-03-07":87,"2026-03-08":88,"2026-03-09":79,"2026-03-10":112,"2026-03-11":190,"2026-03-12":208,"2026-03-13":174,"2026-03-14":78,"2026-03-15":81,"2026-03-16":110,"2026-03-17":84,"2026-03-18":117,"2026-03-19":98,"2026-03-20":94,"2026-03-21":118},"抖快":{"2026-03-01":73,"2026-03-02":96,"2026-03-03":138,"2026-03-04":127,"2026-03-05":124,"2026-03-06":116,"2026-03-07":117,"2026-03-08":152,"2026-03-09":172,"2026-03-10":160,"2026-03-11":250,"2026-03-12":196,"2026-03-13":188,"2026-03-14":110,"2026-03-15":155,"2026-03-16":128,"2026-03-17":102,"2026-03-18":83,"2026-03-19":72,"2026-03-20":1040,"2026-03-21":1050}},"days_count":21,"last_7_avg":1647,"monthly_avg":1516,"model_channel_daily":{"小新平板11":{"官网":{"2026-03-01":325,"2026-03-02":206,"2026-03-03":79,"2026-03-04":102,"2026-03-05":156,"2026-03-06":109,"2026-03-07":80,"2026-03-08":60,"2026-03-09":62,"2026-03-10":60,"2026-03-11":152,"2026-03-12":90,"2026-03-13":112,"2026-03-14":59,"2026-03-15":53,"2026-03-16":62,"2026-03-17":45,"2026-03-18":45,"2026-03-19":87,"2026-03-20":83,"2026-03-21":62},"天猫":{"2026-03-01":141,"2026-03-02":131,"2026-03-03":158,"2026-03-04":140,"2026-03-05":127,"2026-03-06":159,"2026-03-07":176,"2026-03-08":185,"2026-03-09":155,"2026-03-10":147,"2026-03-11":310,"2026-03-12":246,"2026-03-13":240,"2026-03-14":111,"2026-03-15":123,"2026-03-16":113,"2026-03-17":105,"2026-03-18":119,"2026-03-19":141,"2026-03-20":220,"2026-03-21":170},"京东官旗":{"2026-03-01":23,"2026-03-02":28,"2026-03-03":52,"2026-03-04":55,"2026-03-05":61,"2026-03-06":76,"2026-03-07":70,"2026-03-08":61,"2026-03-09":61,"2026-03-10":87,"2026-03-11":144,"2026-03-12":166,"2026-03-13":136,"2026-03-14":65,"2026-03-15":64,"2026-03-16":98,"2026-03-17":68,"2026-03-18":86,"2026-03-19":75,"2026-03-20":69,"2026-03-21":60},"抖快":{"2026-03-01":19,"2026-03-02":30,"2026-03-03":22,"2026-03-04":18,"2026-03-05":29,"2026-03-06":24,"2026-03-07":21,"2026-03-08":28,"2026-03-09":22,"2026-03-10":15,"2026-03-11":34,"2026-03-12":32,"2026-03-13":32,"2026-03-14":15,"2026-03-15":18,"2026-03-16":25,"2026-03-17":17,"2026-03-18":12,"2026-03-19":14,"2026-03-20":14,"2026-03-21":14}},"小新平板12.1":{"官网":{"2026-03-01":1,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":1,"2026-03-06":1,"2026-03-07":1,"2026-03-08":0,"2026-03-09":0,"2026-03-10":2,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":0,"2026-03-20":0,"2026-03-21":1},"天猫":{"2026-03-01":3,"2026-03-02":2,"2026-03-03":0,"2026-03-04":0,"2026-03-05":1,"2026-03-06":3,"2026-03-07":0,"2026-03-08":0,"2026-03-09":1,"2026-03-10":1,"2026-03-11":4,"2026-03-12":0,"2026-03-13":0,"2026-03-14":1,"2026-03-15":0,"2026-03-16":4,"2026-03-17":3,"2026-03-18":1,"2026-03-19":1,"2026-03-20":0,"2026-03-21":1},"京东官旗":{"2026-03-01":1,"2026-03-02":1,"2026-03-03":1,"2026-03-04":2,"2026-03-05":3,"2026-03-06":2,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":0,"2026-03-20":0,"2026-03-21":0},"抖快":{"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":0,"2026-03-20":1,"2026-03-21":0}},"PadProGT":{"官网":{"2026-03-01":206,"2026-03-02":135,"2026-03-03":76,"2026-03-04":26,"2026-03-05":13,"2026-03-06":19,"2026-03-07":14,"2026-03-08":14,"2026-03-09":7,"2026-03-10":18,"2026-03-11":28,"2026-03-12":18,"2026-03-13":28,"2026-03-14":14,"2026-03-15":16,"2026-03-16":10,"2026-03-17":6,"2026-03-18":8,"2026-03-19":10,"2026-03-20":11,"2026-03-21":9},"天猫":{"2026-03-01":130,"2026-03-02":130,"2026-03-03":120,"2026-03-04":125,"2026-03-05":150,"2026-03-06":135,"2026-03-07":139,"2026-03-08":143,"2026-03-09":95,"2026-03-10":83,"2026-03-11":184,"2026-03-12":92,"2026-03-13":130,"2026-03-14":49,"2026-03-15":42,"2026-03-16":53,"2026-03-17":41,"2026-03-18":41,"2026-03-19":65,"2026-03-20":99,"2026-03-21":62},"京东官旗":{"2026-03-01":4,"2026-03-02":10,"2026-03-03":23,"2026-03-04":21,"2026-03-05":18,"2026-03-06":5,"2026-03-07":10,"2026-03-08":20,"2026-03-09":14,"2026-03-10":18,"2026-03-11":32,"2026-03-12":32,"2026-03-13":28,"2026-03-14":9,"2026-03-15":13,"2026-03-16":7,"2026-03-17":9,"2026-03-18":21,"2026-03-19":18,"2026-03-20":9,"2026-03-21":15},"抖快":{"2026-03-01":31,"2026-03-02":47,"2026-03-03":86,"2026-03-04":68,"2026-03-05":48,"2026-03-06":57,"2026-03-07":52,"2026-03-08":79,"2026-03-09":98,"2026-03-10":114,"2026-03-11":134,"2026-03-12":104,"2026-03-13":94,"2026-03-14":61,"2026-03-15":107,"2026-03-16":79,"2026-03-17":48,"2026-03-18":53,"2026-03-19":31,"2026-03-20":36,"2026-03-21":28}},"拯救者Y700 4代":{"官网":{"2026-03-01":24,"2026-03-02":31,"2026-03-03":30,"2026-03-04":55,"2026-03-05":39,"2026-03-06":62,"2026-03-07":57,"2026-03-08":31,"2026-03-09":50,"2026-03-10":54,"2026-03-11":346,"2026-03-12":208,"2026-03-13":146,"2026-03-14":54,"2026-03-15":33,"2026-03-16":93,"2026-03-17":26,"2026-03-18":8,"2026-03-19":13,"2026-03-20":30,"2026-03-21":41},"天猫":{"2026-03-01":53,"2026-03-02":68,"2026-03-03":53,"2026-03-04":52,"2026-03-05":45,"2026-03-06":37,"2026-03-07":42,"2026-03-08":42,"2026-03-09":37,"2026-03-10":35,"2026-03-11":36,"2026-03-12":32,"2026-03-13":30,"2026-03-14":21,"2026-03-15":11,"2026-03-16":12,"2026-03-17":15,"2026-03-18":15,"2026-03-19":14,"2026-03-20":36,"2026-03-21":22},"京东官旗":{"2026-03-01":3,"2026-03-02":3,"2026-03-03":6,"2026-03-04":6,"2026-03-05":6,"2026-03-06":5,"2026-03-07":3,"2026-03-08":4,"2026-03-09":2,"2026-03-10":3,"2026-03-11":4,"2026-03-12":4,"2026-03-13":4,"2026-03-14":1,"2026-03-15":1,"2026-03-16":3,"2026-03-17":3,"2026-03-18":2,"2026-03-19":5,"2026-03-20":5,"2026-03-21":3},"抖快":{"2026-03-01":15,"2026-03-02":15,"2026-03-03":21,"2026-03-04":27,"2026-03-05":29,"2026-03-06":23,"2026-03-07":27,"2026-03-08":25,"2026-03-09":27,"2026-03-10":12,"2026-03-11":28,"2026-03-12":34,"2026-03-13":24,"2026-03-14":16,"2026-03-15":11,"2026-03-16":8,"2026-03-17":15,"2026-03-18":6,"2026-03-19":2,"2026-03-20":4,"2026-03-21":8}},"Y700 五代":{"官网":{"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":23,"2026-03-20":164,"2026-03-21":133},"天猫":{"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":2,"2026-03-14":0,"2026-03-15":1,"2026-03-16":0,"2026-03-17":0,"2026-03-18":1,"2026-03-19":2,"2026-03-20":725,"2026-03-21":550},"京东官旗":{"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":0,"2026-03-20":9,"2026-03-21":36},"抖快":{"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":2,"2026-03-17":2,"2026-03-18":1,"2026-03-19":5,"2026-03-20":948,"2026-03-21":953}},"PadPro12.7":{"官网":{"2026-03-01":1,"2026-03-02":2,"2026-03-03":1,"2026-03-04":3,"2026-03-05":2,"2026-03-06":4,"2026-03-07":2,"2026-03-08":4,"2026-03-09":0,"2026-03-10":3,"2026-03-11":6,"2026-03-12":8,"2026-03-13":16,"2026-03-14":5,"2026-03-15":2,"2026-03-16":2,"2026-03-17":0,"2026-03-18":3,"2026-03-19":3,"2026-03-20":3,"2026-03-21":3},"天猫":{"2026-03-01":43,"2026-03-02":38,"2026-03-03":46,"2026-03-04":82,"2026-03-05":100,"2026-03-06":81,"2026-03-07":79,"2026-03-08":91,"2026-03-09":78,"2026-03-10":65,"2026-03-11":146,"2026-03-12":110,"2026-03-13":100,"2026-03-14":42,"2026-03-15":44,"2026-03-16":40,"2026-03-17":51,"2026-03-18":42,"2026-03-19":86,"2026-03-20":85,"2026-03-21":69},"京东官旗":{"2026-03-01":2,"2026-03-02":0,"2026-03-03":2,"2026-03-04":3,"2026-03-05":0,"2026-03-06":0,"2026-03-07":4,"2026-03-08":2,"2026-03-09":1,"2026-03-10":2,"2026-03-11":10,"2026-03-12":2,"2026-03-13":6,"2026-03-14":3,"2026-03-15":3,"2026-03-16":2,"2026-03-17":4,"2026-03-18":7,"2026-03-19":0,"2026-03-20":1,"2026-03-21":1},"抖快":{"2026-03-01":8,"2026-03-02":4,"2026-03-03":9,"2026-03-04":14,"2026-03-05":18,"2026-03-06":12,"2026-03-07":17,"2026-03-08":20,"2026-03-09":25,"2026-03-10":19,"2026-03-11":52,"2026-03-12":24,"2026-03-13":36,"2026-03-14":18,"2026-03-15":19,"2026-03-16":12,"2026-03-17":19,"2026-03-18":11,"2026-03-19":19,"2026-03-20":14,"2026-03-21":10}}},"channel_model_mix":{"官网":{"小新平板11":2089,"拯救者Y700 4代":1431,"PadProGT":686,"Y700 五代":320,"小新pad 2023":145,"PadPro12.7":73,"YogaPadPro 14.5":27,"小新pad 2024":14,"小新Pro13":12,"小新平板12.1":7,"小新ProGT13":1,"拯救者Y700 3代":1},"天猫":{"小新平板11":3417,"PadProGT":2108,"PadPro12.7":1518,"Y700 五代":1281,"拯救者Y700 4代":708,"小新Pro13":113,"小新pad 2023":29,"YogaPadPro 14.5":27,"小新平板12.1":26,"小新pad 2024":4},"京东官旗":{"小新平板11":1605,"PadProGT":336,"拯救者Y700 4代":76,"PadPro12.7":55,"Y700 五代":45,"小新平板12.1":10,"小新pad 2023":7,"小新Pro13":2,"Y700 2代":1,"Pad Pro12.7":1,"YogaPadPro 14.5":1,"小新pad 2024":1},"抖快":{"Y700 五代":1911,"PadProGT":1455,"小新平板11":455,"PadPro12.7":380,"拯救者Y700 4代":377,"小新Pro13":62,"小新pad plus 2023":7,"小新pad 2024":1,"小新平板12.1":1}},"model_daily":{"小新平板11":{"2026-03-01":511,"2026-03-02":400,"2026-03-03":317,"2026-03-04":316,"2026-03-05":373,"2026-03-06":370,"2026-03-07":348,"2026-03-08":335,"2026-03-09":302,"2026-03-10":316,"2026-03-11":644,"2026-03-12":540,"2026-03-13":526,"2026-03-14":254,"2026-03-15":259,"2026-03-16":298,"2026-03-17":236,"2026-03-18":263,"2026-03-19":318,"2026-03-20":389,"2026-03-21":307},"小新平板12.1":{"2026-03-01":124,"2026-03-02":179,"2026-03-03":221,"2026-03-04":296,"2026-03-05":336,"2026-03-06":411,"2026-03-07":451,"2026-03-08":469,"2026-03-09":422,"2026-03-10":357,"2026-03-11":648,"2026-03-12":442,"2026-03-13":492,"2026-03-14":231,"2026-03-15":209,"2026-03-16":216,"2026-03-17":178,"2026-03-18":197,"2026-03-19":282,"2026-03-20":406,"2026-03-21":330},"PadProGT":{"2026-03-01":371,"2026-03-02":322,"2026-03-03":305,"2026-03-04":240,"2026-03-05":230,"2026-03-06":236,"2026-03-07":288,"2026-03-08":282,"2026-03-09":231,"2026-03-10":279,"2026-03-11":510,"2026-03-12":360,"2026-03-13":442,"2026-03-14":188,"2026-03-15":217,"2026-03-16":186,"2026-03-17":173,"2026-03-18":199,"2026-03-19":203,"2026-03-20":228,"2026-03-21":220},"拯救者Y700 4代":{"2026-03-01":180,"2026-03-02":205,"2026-03-03":173,"2026-03-04":211,"2026-03-05":166,"2026-03-06":188,"2026-03-07":229,"2026-03-08":210,"2026-03-09":212,"2026-03-10":203,"2026-03-11":576,"2026-03-12":498,"2026-03-13":454,"2026-03-14":180,"2026-03-15":204,"2026-03-16":297,"2026-03-17":213,"2026-03-18":207,"2026-03-19":195,"2026-03-20":402,"2026-03-21":326},"Y700 五代":{"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":2,"2026-03-14":0,"2026-03-15":1,"2026-03-16":4,"2026-03-17":2,"2026-03-18":2,"2026-03-19":30,"2026-03-20":1848,"2026-03-21":1673},"PadPro12.7":{"2026-03-01":54,"2026-03-02":44,"2026-03-03":58,"2026-03-04":102,"2026-03-05":120,"2026-03-06":97,"2026-03-07":102,"2026-03-08":117,"2026-03-09":104,"2026-03-10":89,"2026-03-11":214,"2026-03-12":144,"2026-03-13":158,"2026-03-14":68,"2026-03-15":68,"2026-03-16":56,"2026-03-17":75,"2026-03-18":63,"2026-03-19":108,"2026-03-20":103,"2026-03-21":83}}},"FY25 Q4":{"month":"FY25 Q4","month_num":"Q4","last_day":90,"targets":{"总目标":142.5,"官网":21.0,"天猫":70.5,"京东官旗":15.0,"抖快":36.0},"actual_total":78.3,"achievement_rate":54.9,"channels":{"官网":15.5,"天猫":26.4,"京东官旗":8.0,"抖快":11.6},"channel_targets":{"官网":21.0,"天猫":70.5,"京东官旗":15.0,"抖快":36.0},"store_mix":{"天猫":26.4,"官网":15.5,"国代":9.8,"抖快":11.6,"京东官旗":8.0},"models":{"sales":{"小新平板11":32052,"拯救者Y700 4代":14606,"PadProGT":12597,"小新平板12.1":8174,"PadPro12.7":6027,"Y700 五代":3565,"小新pad 2023":700,"小新Pro13":189,"YogaPadPro 14.5":148,"小新pad 2024":114,"Pad Studio":21,"拯救者Y700 3代":19,"Pad Pro12.7":17,"小新pad plus 2023":17,"YogaPadPro 12.7":5,"Pad 2024 舒视版":4,"Y700 2代":3,"拯救者Y700 3代 超控版":3,"Pad 2024 舒视智学版":1,"Pad Pro12.7 类纸屏":1,"小新ProGT13":1},"key_models":{"小新平板11":32052,"小新平板12.1":8174,"PadProGT":12597,"拯救者Y700 4代":14606,"Y700 五代":3565,"PadPro12.7":6027},"daily_avg":{"小新平板11":401,"小新平板12.1":102,"PadProGT":157,"拯救者Y700 4代":183,"Y700 五代":45,"PadPro12.7":75}},"daily":{"2026-01-01":459,"2026-01-02":304,"2026-01-03":331,"2026-01-04":359,"2026-01-05":341,"2026-01-06":459,"2026-01-07":699,"2026-01-08":925,"2026-01-09":781,"2026-01-10":845,"2026-01-11":771,"2026-01-12":819,"2026-01-13":780,"2026-01-14":756,"2026-01-15":803,"2026-01-16":967,"2026-01-17":1019,"2026-01-18":1127,"2026-01-19":1016,"2026-01-20":985,"2026-01-21":1090,"2026-01-22":1061,"2026-01-23":1186,"2026-01-24":1074,"2026-01-25":1043,"2026-01-26":979,"2026-01-27":1077,"2026-01-28":1475,"2026-01-29":1346,"2026-01-30":1157,"2026-01-31":1064,"2026-02-01":959,"2026-02-02":974,"2026-02-03":1025,"2026-02-04":917,"2026-02-05":872,"2026-02-06":926,"2026-02-07":1030,"2026-02-08":995,"2026-02-09":958,"2026-02-10":824,"2026-02-11":831,"2026-02-12":870,"2026-02-13":838,"2026-02-14":746,"2026-02-15":671,"2026-02-16":446,"2026-02-17":236,"2026-02-18":292,"2026-02-19":343,"2026-02-20":348,"2026-02-21":300,"2026-02-22":292,"2026-02-23":296,"2026-02-24":467,"2026-02-25":624,"2026-02-26":756,"2026-02-27":707,"2026-02-28":806,"2026-03-01":1257,"2026-03-02":1162,"2026-03-03":1086,"2026-03-04":1181,"2026-03-05":1241,"2026-03-06":1313,"2026-03-07":1429,"2026-03-08":1425,"2026-03-09":1289,"2026-03-10":1260,"2026-03-11":2606,"2026-03-12":2020,"2026-03-13":2106,"2026-03-14":932,"2026-03-15":967,"2026-03-16":1078,"2026-03-17":888,"2026-03-18":944,"2026-03-19":1146,"2026-03-20":3463,"2026-03-21":3040},"channel_daily":{"官网":{"2026-01-01":95,"2026-01-02":58,"2026-01-03":62,"2026-01-04":74,"2026-01-05":72,"2026-01-06":59,"2026-01-07":98,"2026-01-08":230,"2026-01-09":146,"2026-01-10":171,"2026-01-11":175,"2026-01-12":202,"2026-01-13":166,"2026-01-14":168,"2026-01-15":166,"2026-01-16":155,"2026-01-17":158,"2026-01-18":148,"2026-01-19":160,"2026-01-20":116,"2026-01-21":161,"2026-01-22":145,"2026-01-23":117,"2026-01-24":137,"2026-01-25":209,"2026-01-26":265,"2026-01-27":369,"2026-01-28":642,"2026-01-29":567,"2026-01-30":382,"2026-01-31":233,"2026-02-01":168,"2026-02-02":179,"2026-02-03":203,"2026-02-04":109,"2026-02-05":119,"2026-02-06":130,"2026-02-07":203,"2026-02-08":218,"2026-02-09":161,"2026-02-10":136,"2026-02-11":150,"2026-02-12":139,"2026-02-13":156,"2026-02-14":171,"2026-02-15":159,"2026-02-16":119,"2026-02-17":94,"2026-02-18":105,"2026-02-19":158,"2026-02-20":147,"2026-02-21":97,"2026-02-22":82,"2026-02-23":73,"2026-02-24":128,"2026-02-25":215,"2026-02-26":418,"2026-02-27":378,"2026-02-28":366,"2026-03-01":570,"2026-03-02":380,"2026-03-03":195,"2026-03-04":196,"2026-03-05":221,"2026-03-06":201,"2026-03-07":163,"2026-03-08":120,"2026-03-09":129,"2026-03-10":145,"2026-03-11":544,"2026-03-12":338,"2026-03-13":318,"2026-03-14":138,"2026-03-15":111,"2026-03-16":179,"2026-03-17":82,"2026-03-18":72,"2026-03-19":141,"2026-03-20":311,"2026-03-21":260},"天猫":{"2026-01-01":171,"2026-01-02":94,"2026-01-03":101,"2026-01-04":102,"2026-01-05":138,"2026-01-06":193,"2026-01-07":312,"2026-01-08":362,"2026-01-09":334,"2026-01-10":345,"2026-01-11":286,"2026-01-12":290,"2026-01-13":304,"2026-01-14":323,"2026-01-15":331,"2026-01-16":418,"2026-01-17":441,"2026-01-18":370,"2026-01-19":322,"2026-01-20":358,"2026-01-21":412,"2026-01-22":402,"2026-01-23":408,"2026-01-24":361,"2026-01-25":389,"2026-01-26":387,"2026-01-27":417,"2026-01-28":446,"2026-01-29":355,"2026-01-30":332,"2026-01-31":375,"2026-02-01":371,"2026-02-02":380,"2026-02-03":412,"2026-02-04":332,"2026-02-05":342,"2026-02-06":341,"2026-02-07":406,"2026-02-08":419,"2026-02-09":393,"2026-02-10":354,"2026-02-11":343,"2026-02-12":356,"2026-02-13":329,"2026-02-14":273,"2026-02-15":268,"2026-02-16":166,"2026-02-17":70,"2026-02-18":90,"2026-02-19":117,"2026-02-20":117,"2026-02-21":122,"2026-02-22":118,"2026-02-23":137,"2026-02-24":209,"2026-02-25":242,"2026-02-26":176,"2026-02-27":176,"2026-02-28":264,"2026-03-01":373,"2026-03-02":374,"2026-03-03":380,"2026-03-04":405,"2026-03-05":429,"2026-03-06":420,"2026-03-07":438,"2026-03-08":461,"2026-03-09":372,"2026-03-10":336,"2026-03-11":680,"2026-03-12":490,"2026-03-13":512,"2026-03-14":228,"2026-03-15":222,"2026-03-16":229,"2026-03-17":219,"2026-03-18":221,"2026-03-19":312,"2026-03-20":1208,"2026-03-21":922},"京东官旗":{"2026-01-01":47,"2026-01-02":22,"2026-01-03":21,"2026-01-04":38,"2026-01-05":24,"2026-01-06":33,"2026-01-07":46,"2026-01-08":45,"2026-01-09":35,"2026-01-10":56,"2026-01-11":36,"2026-01-12":50,"2026-01-13":66,"2026-01-14":31,"2026-01-15":47,"2026-01-16":49,"2026-01-17":70,"2026-01-18":111,"2026-01-19":143,"2026-01-20":101,"2026-01-21":90,"2026-01-22":124,"2026-01-23":131,"2026-01-24":104,"2026-01-25":135,"2026-01-26":112,"2026-01-27":92,"2026-01-28":125,"2026-01-29":140,"2026-01-30":164,"2026-01-31":181,"2026-02-01":189,"2026-02-02":184,"2026-02-03":225,"2026-02-04":259,"2026-02-05":210,"2026-02-06":248,"2026-02-07":204,"2026-02-08":198,"2026-02-09":248,"2026-02-10":189,"2026-02-11":181,"2026-02-12":208,"2026-02-13":210,"2026-02-14":168,"2026-02-15":82,"2026-02-16":66,"2026-02-17":14,"2026-02-18":23,"2026-02-19":12,"2026-02-20":25,"2026-02-21":18,"2026-02-22":27,"2026-02-23":33,"2026-02-24":44,"2026-02-25":33,"2026-02-26":23,"2026-02-27":41,"2026-02-28":58,"2026-03-01":33,"2026-03-02":43,"2026-03-03":84,"2026-03-04":87,"2026-03-05":88,"2026-03-06":88,"2026-03-07":87,"2026-03-08":88,"2026-03-09":79,"2026-03-10":112,"2026-03-11":190,"2026-03-12":208,"2026-03-13":174,"2026-03-14":78,"2026-03-15":81,"2026-03-16":110,"2026-03-17":84,"2026-03-18":117,"2026-03-19":98,"2026-03-20":94,"2026-03-21":118},"抖快":{"2026-01-01":42,"2026-01-02":39,"2026-01-03":45,"2026-01-04":49,"2026-01-05":39,"2026-01-06":51,"2026-01-07":39,"2026-01-08":49,"2026-01-09":51,"2026-01-10":53,"2026-01-11":61,"2026-01-12":78,"2026-01-13":59,"2026-01-14":60,"2026-01-15":58,"2026-01-16":62,"2026-01-17":82,"2026-01-18":178,"2026-01-19":133,"2026-01-20":144,"2026-01-21":127,"2026-01-22":139,"2026-01-23":279,"2026-01-24":316,"2026-01-25":193,"2026-01-26":113,"2026-01-27":107,"2026-01-28":141,"2026-01-29":139,"2026-01-30":120,"2026-01-31":122,"2026-02-01":231,"2026-02-02":231,"2026-02-03":185,"2026-02-04":217,"2026-02-05":201,"2026-02-06":207,"2026-02-07":217,"2026-02-08":160,"2026-02-09":156,"2026-02-10":145,"2026-02-11":157,"2026-02-12":167,"2026-02-13":143,"2026-02-14":134,"2026-02-15":162,"2026-02-16":95,"2026-02-17":58,"2026-02-18":74,"2026-02-19":56,"2026-02-20":59,"2026-02-21":63,"2026-02-22":65,"2026-02-23":53,"2026-02-24":86,"2026-02-25":134,"2026-02-26":139,"2026-02-27":112,"2026-02-28":118,"2026-03-01":73,"2026-03-02":96,"2026-03-03":138,"2026-03-04":127,"2026-03-05":124,"2026-03-06":116,"2026-03-07":117,"2026-03-08":152,"2026-03-09":172,"2026-03-10":160,"2026-03-11":250,"2026-03-12":196,"2026-03-13":188,"2026-03-14":110,"2026-03-15":155,"2026-03-16":128,"2026-03-17":102,"2026-03-18":83,"2026-03-19":72,"2026-03-20":1040,"2026-03-21":1050}},"days_count":90,"last_7_avg":1647,"monthly_avg":870,"model_channel_daily":{"小新平板11":{"官网":{"2026-01-01":55,"2026-01-02":33,"2026-01-03":45,"2026-01-04":55,"2026-01-05":56,"2026-01-06":42,"2026-01-07":76,"2026-01-08":207,"2026-01-09":130,"2026-01-10":151,"2026-01-11":158,"2026-01-12":195,"2026-01-13":144,"2026-01-14":153,"2026-01-15":134,"2026-01-16":145,"2026-01-17":127,"2026-01-18":122,"2026-01-19":141,"2026-01-20":91,"2026-01-21":131,"2026-01-22":122,"2026-01-23":88,"2026-01-24":106,"2026-01-25":145,"2026-01-26":192,"2026-01-27":300,"2026-01-28":589,"2026-01-29":503,"2026-01-30":270,"2026-01-31":135,"2026-02-01":111,"2026-02-02":100,"2026-02-03":111,"2026-02-04":49,"2026-02-05":52,"2026-02-06":49,"2026-02-07":108,"2026-02-08":98,"2026-02-09":78,"2026-02-10":59,"2026-02-11":66,"2026-02-12":46,"2026-02-13":65,"2026-02-14":94,"2026-02-15":86,"2026-02-16":65,"2026-02-17":61,"2026-02-18":65,"2026-02-19":86,"2026-02-20":80,"2026-02-21":50,"2026-02-22":35,"2026-02-23":42,"2026-02-24":82,"2026-02-25":145,"2026-02-26":327,"2026-02-27":256,"2026-02-28":208,"2026-03-01":325,"2026-03-02":206,"2026-03-03":79,"2026-03-04":102,"2026-03-05":156,"2026-03-06":109,"2026-03-07":80,"2026-03-08":60,"2026-03-09":62,"2026-03-10":60,"2026-03-11":152,"2026-03-12":90,"2026-03-13":112,"2026-03-14":59,"2026-03-15":53,"2026-03-16":62,"2026-03-17":45,"2026-03-18":45,"2026-03-19":87,"2026-03-20":83,"2026-03-21":62},"天猫":{"2026-01-01":82,"2026-01-02":56,"2026-01-03":61,"2026-01-04":58,"2026-01-05":95,"2026-01-06":141,"2026-01-07":256,"2026-01-08":275,"2026-01-09":266,"2026-01-10":255,"2026-01-11":224,"2026-01-12":208,"2026-01-13":238,"2026-01-14":246,"2026-01-15":229,"2026-01-16":313,"2026-01-17":330,"2026-01-18":286,"2026-01-19":250,"2026-01-20":280,"2026-01-21":316,"2026-01-22":291,"2026-01-23":302,"2026-01-24":252,"2026-01-25":240,"2026-01-26":254,"2026-01-27":295,"2026-01-28":295,"2026-01-29":211,"2026-01-30":156,"2026-01-31":163,"2026-02-01":194,"2026-02-02":170,"2026-02-03":200,"2026-02-04":136,"2026-02-05":145,"2026-02-06":140,"2026-02-07":186,"2026-02-08":199,"2026-02-09":181,"2026-02-10":159,"2026-02-11":182,"2026-02-12":191,"2026-02-13":167,"2026-02-14":151,"2026-02-15":147,"2026-02-16":94,"2026-02-17":41,"2026-02-18":40,"2026-02-19":50,"2026-02-20":56,"2026-02-21":46,"2026-02-22":39,"2026-02-23":59,"2026-02-24":77,"2026-02-25":85,"2026-02-26":65,"2026-02-27":74,"2026-02-28":108,"2026-03-01":141,"2026-03-02":131,"2026-03-03":158,"2026-03-04":140,"2026-03-05":127,"2026-03-06":159,"2026-03-07":176,"2026-03-08":185,"2026-03-09":155,"2026-03-10":147,"2026-03-11":310,"2026-03-12":246,"2026-03-13":240,"2026-03-14":111,"2026-03-15":123,"2026-03-16":113,"2026-03-17":105,"2026-03-18":119,"2026-03-19":141,"2026-03-20":220,"2026-03-21":170},"京东官旗":{"2026-01-01":28,"2026-01-02":11,"2026-01-03":13,"2026-01-04":23,"2026-01-05":22,"2026-01-06":29,"2026-01-07":40,"2026-01-08":42,"2026-01-09":25,"2026-01-10":42,"2026-01-11":33,"2026-01-12":39,"2026-01-13":49,"2026-01-14":29,"2026-01-15":40,"2026-01-16":43,"2026-01-17":55,"2026-01-18":85,"2026-01-19":111,"2026-01-20":74,"2026-01-21":63,"2026-01-22":91,"2026-01-23":96,"2026-01-24":70,"2026-01-25":94,"2026-01-26":86,"2026-01-27":64,"2026-01-28":77,"2026-01-29":92,"2026-01-30":113,"2026-01-31":109,"2026-02-01":124,"2026-02-02":100,"2026-02-03":138,"2026-02-04":179,"2026-02-05":137,"2026-02-06":165,"2026-02-07":132,"2026-02-08":128,"2026-02-09":169,"2026-02-10":134,"2026-02-11":135,"2026-02-12":153,"2026-02-13":146,"2026-02-14":117,"2026-02-15":56,"2026-02-16":47,"2026-02-17":11,"2026-02-18":18,"2026-02-19":9,"2026-02-20":16,"2026-02-21":15,"2026-02-22":20,"2026-02-23":23,"2026-02-24":25,"2026-02-25":23,"2026-02-26":14,"2026-02-27":22,"2026-02-28":39,"2026-03-01":23,"2026-03-02":28,"2026-03-03":52,"2026-03-04":55,"2026-03-05":61,"2026-03-06":76,"2026-03-07":70,"2026-03-08":61,"2026-03-09":61,"2026-03-10":87,"2026-03-11":144,"2026-03-12":166,"2026-03-13":136,"2026-03-14":65,"2026-03-15":64,"2026-03-16":98,"2026-03-17":68,"2026-03-18":86,"2026-03-19":75,"2026-03-20":69,"2026-03-21":60},"抖快":{"2026-01-01":9,"2026-01-02":9,"2026-01-03":21,"2026-01-04":15,"2026-01-05":21,"2026-01-06":34,"2026-01-07":17,"2026-01-08":23,"2026-01-09":23,"2026-01-10":20,"2026-01-11":24,"2026-01-12":52,"2026-01-13":40,"2026-01-14":39,"2026-01-15":29,"2026-01-16":32,"2026-01-17":59,"2026-01-18":121,"2026-01-19":86,"2026-01-20":74,"2026-01-21":65,"2026-01-22":37,"2026-01-23":199,"2026-01-24":256,"2026-01-25":121,"2026-01-26":54,"2026-01-27":33,"2026-01-28":56,"2026-01-29":54,"2026-01-30":34,"2026-01-31":27,"2026-02-01":21,"2026-02-02":27,"2026-02-03":36,"2026-02-04":29,"2026-02-05":29,"2026-02-06":23,"2026-02-07":36,"2026-02-08":26,"2026-02-09":22,"2026-02-10":20,"2026-02-11":26,"2026-02-12":39,"2026-02-13":27,"2026-02-14":23,"2026-02-15":34,"2026-02-16":22,"2026-02-17":11,"2026-02-18":8,"2026-02-19":7,"2026-02-20":9,"2026-02-21":19,"2026-02-22":14,"2026-02-23":15,"2026-02-24":18,"2026-02-25":24,"2026-02-26":14,"2026-02-27":26,"2026-02-28":16,"2026-03-01":19,"2026-03-02":30,"2026-03-03":22,"2026-03-04":18,"2026-03-05":29,"2026-03-06":24,"2026-03-07":21,"2026-03-08":28,"2026-03-09":22,"2026-03-10":15,"2026-03-11":34,"2026-03-12":32,"2026-03-13":32,"2026-03-14":15,"2026-03-15":18,"2026-03-16":25,"2026-03-17":17,"2026-03-18":12,"2026-03-19":14,"2026-03-20":14,"2026-03-21":14}},"小新平板12.1":{"官网":{"2026-01-01":1,"2026-01-02":1,"2026-01-03":0,"2026-01-04":1,"2026-01-05":0,"2026-01-06":1,"2026-01-07":0,"2026-01-08":1,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":1,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":1,"2026-01-24":1,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":2,"2026-01-31":1,"2026-02-01":2,"2026-02-02":0,"2026-02-03":0,"2026-02-04":3,"2026-02-05":2,"2026-02-06":2,"2026-02-07":1,"2026-02-08":4,"2026-02-09":3,"2026-02-10":3,"2026-02-11":1,"2026-02-12":7,"2026-02-13":0,"2026-02-14":2,"2026-02-15":1,"2026-02-16":0,"2026-02-17":1,"2026-02-18":1,"2026-02-19":1,"2026-02-20":1,"2026-02-21":0,"2026-02-22":1,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":1,"2026-02-27":1,"2026-02-28":0,"2026-03-01":1,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":1,"2026-03-06":1,"2026-03-07":1,"2026-03-08":0,"2026-03-09":0,"2026-03-10":2,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":0,"2026-03-20":0,"2026-03-21":1},"天猫":{"2026-01-01":1,"2026-01-02":0,"2026-01-03":0,"2026-01-04":4,"2026-01-05":4,"2026-01-06":0,"2026-01-07":3,"2026-01-08":3,"2026-01-09":1,"2026-01-10":1,"2026-01-11":1,"2026-01-12":4,"2026-01-13":2,"2026-01-14":1,"2026-01-15":1,"2026-01-16":2,"2026-01-17":6,"2026-01-18":2,"2026-01-19":0,"2026-01-20":2,"2026-01-21":1,"2026-01-22":3,"2026-01-23":4,"2026-01-24":22,"2026-01-25":44,"2026-01-26":51,"2026-01-27":52,"2026-01-28":51,"2026-01-29":31,"2026-01-30":51,"2026-01-31":60,"2026-02-01":46,"2026-02-02":71,"2026-02-03":67,"2026-02-04":63,"2026-02-05":54,"2026-02-06":47,"2026-02-07":59,"2026-02-08":55,"2026-02-09":45,"2026-02-10":23,"2026-02-11":6,"2026-02-12":6,"2026-02-13":10,"2026-02-14":8,"2026-02-15":8,"2026-02-16":4,"2026-02-17":3,"2026-02-18":2,"2026-02-19":2,"2026-02-20":2,"2026-02-21":1,"2026-02-22":1,"2026-02-23":0,"2026-02-24":1,"2026-02-25":4,"2026-02-26":2,"2026-02-27":6,"2026-02-28":2,"2026-03-01":3,"2026-03-02":2,"2026-03-03":0,"2026-03-04":0,"2026-03-05":1,"2026-03-06":3,"2026-03-07":0,"2026-03-08":0,"2026-03-09":1,"2026-03-10":1,"2026-03-11":4,"2026-03-12":0,"2026-03-13":0,"2026-03-14":1,"2026-03-15":0,"2026-03-16":4,"2026-03-17":3,"2026-03-18":1,"2026-03-19":1,"2026-03-20":0,"2026-03-21":1},"京东官旗":{"2026-01-01":1,"2026-01-02":1,"2026-01-03":1,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":1,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":1,"2026-01-24":3,"2026-01-25":1,"2026-01-26":2,"2026-01-27":5,"2026-01-28":9,"2026-01-29":4,"2026-01-30":6,"2026-01-31":6,"2026-02-01":4,"2026-02-02":6,"2026-02-03":8,"2026-02-04":6,"2026-02-05":2,"2026-02-06":15,"2026-02-07":11,"2026-02-08":12,"2026-02-09":17,"2026-02-10":11,"2026-02-11":9,"2026-02-12":3,"2026-02-13":3,"2026-02-14":0,"2026-02-15":1,"2026-02-16":2,"2026-02-17":1,"2026-02-18":1,"2026-02-19":0,"2026-02-20":0,"2026-02-21":1,"2026-02-22":0,"2026-02-23":1,"2026-02-24":1,"2026-02-25":0,"2026-02-26":1,"2026-02-27":2,"2026-02-28":4,"2026-03-01":1,"2026-03-02":1,"2026-03-03":1,"2026-03-04":2,"2026-03-05":3,"2026-03-06":2,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":0,"2026-03-20":0,"2026-03-21":0},"抖快":{"2026-01-01":0,"2026-01-02":1,"2026-01-03":0,"2026-01-04":0,"2026-01-05":1,"2026-01-06":1,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":1,"2026-01-20":1,"2026-01-21":1,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":1,"2026-01-29":0,"2026-01-30":4,"2026-01-31":1,"2026-02-01":1,"2026-02-02":1,"2026-02-03":0,"2026-02-04":1,"2026-02-05":4,"2026-02-06":4,"2026-02-07":3,"2026-02-08":5,"2026-02-09":3,"2026-02-10":5,"2026-02-11":3,"2026-02-12":2,"2026-02-13":1,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":1,"2026-02-21":1,"2026-02-22":0,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0,"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":0,"2026-03-20":1,"2026-03-21":0}},"PadProGT":{"官网":{"2026-01-01":19,"2026-01-02":13,"2026-01-03":3,"2026-01-04":5,"2026-01-05":7,"2026-01-06":3,"2026-01-07":8,"2026-01-08":8,"2026-01-09":2,"2026-01-10":9,"2026-01-11":2,"2026-01-12":2,"2026-01-13":3,"2026-01-14":3,"2026-01-15":14,"2026-01-16":3,"2026-01-17":10,"2026-01-18":10,"2026-01-19":7,"2026-01-20":3,"2026-01-21":8,"2026-01-22":6,"2026-01-23":5,"2026-01-24":7,"2026-01-25":15,"2026-01-26":25,"2026-01-27":34,"2026-01-28":23,"2026-01-29":42,"2026-01-30":71,"2026-01-31":48,"2026-02-01":29,"2026-02-02":32,"2026-02-03":25,"2026-02-04":18,"2026-02-05":23,"2026-02-06":25,"2026-02-07":39,"2026-02-08":73,"2026-02-09":38,"2026-02-10":29,"2026-02-11":44,"2026-02-12":52,"2026-02-13":46,"2026-02-14":40,"2026-02-15":24,"2026-02-16":12,"2026-02-17":4,"2026-02-18":5,"2026-02-19":12,"2026-02-20":9,"2026-02-21":14,"2026-02-22":11,"2026-02-23":11,"2026-02-24":25,"2026-02-25":51,"2026-02-26":52,"2026-02-27":72,"2026-02-28":116,"2026-03-01":206,"2026-03-02":135,"2026-03-03":76,"2026-03-04":26,"2026-03-05":13,"2026-03-06":19,"2026-03-07":14,"2026-03-08":14,"2026-03-09":7,"2026-03-10":18,"2026-03-11":28,"2026-03-12":18,"2026-03-13":28,"2026-03-14":14,"2026-03-15":16,"2026-03-16":10,"2026-03-17":6,"2026-03-18":8,"2026-03-19":10,"2026-03-20":11,"2026-03-21":9},"天猫":{"2026-01-01":37,"2026-01-02":14,"2026-01-03":20,"2026-01-04":12,"2026-01-05":19,"2026-01-06":23,"2026-01-07":27,"2026-01-08":35,"2026-01-09":27,"2026-01-10":37,"2026-01-11":28,"2026-01-12":27,"2026-01-13":23,"2026-01-14":23,"2026-01-15":39,"2026-01-16":42,"2026-01-17":39,"2026-01-18":27,"2026-01-19":35,"2026-01-20":34,"2026-01-21":33,"2026-01-22":31,"2026-01-23":24,"2026-01-24":32,"2026-01-25":19,"2026-01-26":19,"2026-01-27":15,"2026-01-28":24,"2026-01-29":37,"2026-01-30":35,"2026-01-31":39,"2026-02-01":39,"2026-02-02":39,"2026-02-03":39,"2026-02-04":42,"2026-02-05":45,"2026-02-06":46,"2026-02-07":53,"2026-02-08":52,"2026-02-09":54,"2026-02-10":48,"2026-02-11":58,"2026-02-12":47,"2026-02-13":56,"2026-02-14":32,"2026-02-15":39,"2026-02-16":19,"2026-02-17":9,"2026-02-18":8,"2026-02-19":15,"2026-02-20":14,"2026-02-21":20,"2026-02-22":19,"2026-02-23":25,"2026-02-24":36,"2026-02-25":38,"2026-02-26":23,"2026-02-27":28,"2026-02-28":73,"2026-03-01":130,"2026-03-02":130,"2026-03-03":120,"2026-03-04":125,"2026-03-05":150,"2026-03-06":135,"2026-03-07":139,"2026-03-08":143,"2026-03-09":95,"2026-03-10":83,"2026-03-11":184,"2026-03-12":92,"2026-03-13":130,"2026-03-14":49,"2026-03-15":42,"2026-03-16":53,"2026-03-17":41,"2026-03-18":41,"2026-03-19":65,"2026-03-20":99,"2026-03-21":62},"京东官旗":{"2026-01-01":5,"2026-01-02":4,"2026-01-03":5,"2026-01-04":6,"2026-01-05":1,"2026-01-06":3,"2026-01-07":4,"2026-01-08":2,"2026-01-09":8,"2026-01-10":12,"2026-01-11":2,"2026-01-12":10,"2026-01-13":14,"2026-01-14":1,"2026-01-15":3,"2026-01-16":4,"2026-01-17":9,"2026-01-18":22,"2026-01-19":27,"2026-01-20":23,"2026-01-21":25,"2026-01-22":31,"2026-01-23":29,"2026-01-24":29,"2026-01-25":39,"2026-01-26":23,"2026-01-27":20,"2026-01-28":34,"2026-01-29":41,"2026-01-30":39,"2026-01-31":59,"2026-02-01":56,"2026-02-02":74,"2026-02-03":73,"2026-02-04":73,"2026-02-05":68,"2026-02-06":64,"2026-02-07":58,"2026-02-08":57,"2026-02-09":60,"2026-02-10":43,"2026-02-11":32,"2026-02-12":46,"2026-02-13":57,"2026-02-14":45,"2026-02-15":21,"2026-02-16":15,"2026-02-17":2,"2026-02-18":2,"2026-02-19":3,"2026-02-20":4,"2026-02-21":1,"2026-02-22":4,"2026-02-23":7,"2026-02-24":12,"2026-02-25":2,"2026-02-26":3,"2026-02-27":7,"2026-02-28":9,"2026-03-01":4,"2026-03-02":10,"2026-03-03":23,"2026-03-04":21,"2026-03-05":18,"2026-03-06":5,"2026-03-07":10,"2026-03-08":20,"2026-03-09":14,"2026-03-10":18,"2026-03-11":32,"2026-03-12":32,"2026-03-13":28,"2026-03-14":9,"2026-03-15":13,"2026-03-16":7,"2026-03-17":9,"2026-03-18":21,"2026-03-19":18,"2026-03-20":9,"2026-03-21":15},"抖快":{"2026-01-01":19,"2026-01-02":15,"2026-01-03":15,"2026-01-04":18,"2026-01-05":11,"2026-01-06":10,"2026-01-07":15,"2026-01-08":16,"2026-01-09":23,"2026-01-10":25,"2026-01-11":22,"2026-01-12":18,"2026-01-13":12,"2026-01-14":15,"2026-01-15":21,"2026-01-16":25,"2026-01-17":16,"2026-01-18":40,"2026-01-19":26,"2026-01-20":20,"2026-01-21":24,"2026-01-22":35,"2026-01-23":18,"2026-01-24":15,"2026-01-25":28,"2026-01-26":10,"2026-01-27":13,"2026-01-28":22,"2026-01-29":25,"2026-01-30":36,"2026-01-31":24,"2026-02-01":49,"2026-02-02":38,"2026-02-03":43,"2026-02-04":38,"2026-02-05":47,"2026-02-06":41,"2026-02-07":39,"2026-02-08":40,"2026-02-09":40,"2026-02-10":43,"2026-02-11":35,"2026-02-12":45,"2026-02-13":26,"2026-02-14":20,"2026-02-15":31,"2026-02-16":13,"2026-02-17":7,"2026-02-18":15,"2026-02-19":10,"2026-02-20":11,"2026-02-21":16,"2026-02-22":22,"2026-02-23":15,"2026-02-24":27,"2026-02-25":33,"2026-02-26":24,"2026-02-27":8,"2026-02-28":19,"2026-03-01":31,"2026-03-02":47,"2026-03-03":86,"2026-03-04":68,"2026-03-05":48,"2026-03-06":57,"2026-03-07":52,"2026-03-08":79,"2026-03-09":98,"2026-03-10":114,"2026-03-11":134,"2026-03-12":104,"2026-03-13":94,"2026-03-14":61,"2026-03-15":107,"2026-03-16":79,"2026-03-17":48,"2026-03-18":53,"2026-03-19":31,"2026-03-20":36,"2026-03-21":28}},"拯救者Y700 4代":{"官网":{"2026-01-01":2,"2026-01-02":1,"2026-01-03":0,"2026-01-04":3,"2026-01-05":2,"2026-01-06":4,"2026-01-07":2,"2026-01-08":2,"2026-01-09":3,"2026-01-10":1,"2026-01-11":7,"2026-01-12":1,"2026-01-13":5,"2026-01-14":5,"2026-01-15":5,"2026-01-16":3,"2026-01-17":4,"2026-01-18":5,"2026-01-19":5,"2026-01-20":3,"2026-01-21":7,"2026-01-22":8,"2026-01-23":11,"2026-01-24":9,"2026-01-25":38,"2026-01-26":40,"2026-01-27":29,"2026-01-28":21,"2026-01-29":14,"2026-01-30":30,"2026-01-31":36,"2026-02-01":22,"2026-02-02":33,"2026-02-03":45,"2026-02-04":31,"2026-02-05":30,"2026-02-06":39,"2026-02-07":41,"2026-02-08":35,"2026-02-09":28,"2026-02-10":20,"2026-02-11":20,"2026-02-12":22,"2026-02-13":31,"2026-02-14":25,"2026-02-15":39,"2026-02-16":34,"2026-02-17":21,"2026-02-18":26,"2026-02-19":54,"2026-02-20":53,"2026-02-21":29,"2026-02-22":21,"2026-02-23":13,"2026-02-24":14,"2026-02-25":16,"2026-02-26":17,"2026-02-27":33,"2026-02-28":27,"2026-03-01":24,"2026-03-02":31,"2026-03-03":30,"2026-03-04":55,"2026-03-05":39,"2026-03-06":62,"2026-03-07":57,"2026-03-08":31,"2026-03-09":50,"2026-03-10":54,"2026-03-11":346,"2026-03-12":208,"2026-03-13":146,"2026-03-14":54,"2026-03-15":33,"2026-03-16":93,"2026-03-17":26,"2026-03-18":8,"2026-03-19":13,"2026-03-20":30,"2026-03-21":41},"天猫":{"2026-01-01":16,"2026-01-02":8,"2026-01-03":11,"2026-01-04":11,"2026-01-05":13,"2026-01-06":12,"2026-01-07":12,"2026-01-08":24,"2026-01-09":19,"2026-01-10":30,"2026-01-11":11,"2026-01-12":29,"2026-01-13":21,"2026-01-14":23,"2026-01-15":26,"2026-01-16":22,"2026-01-17":22,"2026-01-18":27,"2026-01-19":16,"2026-01-20":20,"2026-01-21":23,"2026-01-22":32,"2026-01-23":35,"2026-01-24":26,"2026-01-25":37,"2026-01-26":24,"2026-01-27":23,"2026-01-28":29,"2026-01-29":26,"2026-01-30":34,"2026-01-31":37,"2026-02-01":29,"2026-02-02":29,"2026-02-03":23,"2026-02-04":31,"2026-02-05":33,"2026-02-06":28,"2026-02-07":28,"2026-02-08":30,"2026-02-09":37,"2026-02-10":46,"2026-02-11":36,"2026-02-12":32,"2026-02-13":34,"2026-02-14":25,"2026-02-15":24,"2026-02-16":14,"2026-02-17":8,"2026-02-18":11,"2026-02-19":11,"2026-02-20":11,"2026-02-21":20,"2026-02-22":17,"2026-02-23":12,"2026-02-24":32,"2026-02-25":25,"2026-02-26":36,"2026-02-27":31,"2026-02-28":46,"2026-03-01":53,"2026-03-02":68,"2026-03-03":53,"2026-03-04":52,"2026-03-05":45,"2026-03-06":37,"2026-03-07":42,"2026-03-08":42,"2026-03-09":37,"2026-03-10":35,"2026-03-11":36,"2026-03-12":32,"2026-03-13":30,"2026-03-14":21,"2026-03-15":11,"2026-03-16":12,"2026-03-17":15,"2026-03-18":15,"2026-03-19":14,"2026-03-20":36,"2026-03-21":22},"京东官旗":{"2026-01-01":7,"2026-01-02":3,"2026-01-03":0,"2026-01-04":4,"2026-01-05":0,"2026-01-06":0,"2026-01-07":1,"2026-01-08":0,"2026-01-09":1,"2026-01-10":1,"2026-01-11":1,"2026-01-12":1,"2026-01-13":3,"2026-01-14":1,"2026-01-15":2,"2026-01-16":1,"2026-01-17":4,"2026-01-18":2,"2026-01-19":3,"2026-01-20":1,"2026-01-21":0,"2026-01-22":0,"2026-01-23":2,"2026-01-24":0,"2026-01-25":1,"2026-01-26":0,"2026-01-27":1,"2026-01-28":0,"2026-01-29":0,"2026-01-30":4,"2026-01-31":0,"2026-02-01":1,"2026-02-02":0,"2026-02-03":3,"2026-02-04":0,"2026-02-05":1,"2026-02-06":1,"2026-02-07":0,"2026-02-08":0,"2026-02-09":1,"2026-02-10":0,"2026-02-11":1,"2026-02-12":2,"2026-02-13":2,"2026-02-14":1,"2026-02-15":2,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":2,"2026-02-21":0,"2026-02-22":0,"2026-02-23":0,"2026-02-24":1,"2026-02-25":1,"2026-02-26":2,"2026-02-27":3,"2026-02-28":2,"2026-03-01":3,"2026-03-02":3,"2026-03-03":6,"2026-03-04":6,"2026-03-05":6,"2026-03-06":5,"2026-03-07":3,"2026-03-08":4,"2026-03-09":2,"2026-03-10":3,"2026-03-11":4,"2026-03-12":4,"2026-03-13":4,"2026-03-14":1,"2026-03-15":1,"2026-03-16":3,"2026-03-17":3,"2026-03-18":2,"2026-03-19":5,"2026-03-20":5,"2026-03-21":3},"抖快":{"2026-01-01":5,"2026-01-02":6,"2026-01-03":6,"2026-01-04":6,"2026-01-05":4,"2026-01-06":4,"2026-01-07":6,"2026-01-08":3,"2026-01-09":1,"2026-01-10":3,"2026-01-11":6,"2026-01-12":2,"2026-01-13":4,"2026-01-14":3,"2026-01-15":4,"2026-01-16":3,"2026-01-17":5,"2026-01-18":11,"2026-01-19":16,"2026-01-20":43,"2026-01-21":33,"2026-01-22":49,"2026-01-23":35,"2026-01-24":19,"2026-01-25":22,"2026-01-26":23,"2026-01-27":36,"2026-01-28":37,"2026-01-29":31,"2026-01-30":12,"2026-01-31":32,"2026-02-01":125,"2026-02-02":106,"2026-02-03":60,"2026-02-04":91,"2026-02-05":73,"2026-02-06":91,"2026-02-07":96,"2026-02-08":50,"2026-02-09":33,"2026-02-10":32,"2026-02-11":25,"2026-02-12":22,"2026-02-13":25,"2026-02-14":37,"2026-02-15":60,"2026-02-16":37,"2026-02-17":21,"2026-02-18":45,"2026-02-19":27,"2026-02-20":17,"2026-02-21":9,"2026-02-22":13,"2026-02-23":12,"2026-02-24":22,"2026-02-25":60,"2026-02-26":88,"2026-02-27":62,"2026-02-28":76,"2026-03-01":15,"2026-03-02":15,"2026-03-03":21,"2026-03-04":27,"2026-03-05":29,"2026-03-06":23,"2026-03-07":27,"2026-03-08":25,"2026-03-09":27,"2026-03-10":12,"2026-03-11":28,"2026-03-12":34,"2026-03-13":24,"2026-03-14":16,"2026-03-15":11,"2026-03-16":8,"2026-03-17":15,"2026-03-18":6,"2026-03-19":2,"2026-03-20":4,"2026-03-21":8}},"Y700 五代":{"官网":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":0,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0,"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":23,"2026-03-20":164,"2026-03-21":133},"天猫":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":3,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0,"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":2,"2026-03-14":0,"2026-03-15":1,"2026-03-16":0,"2026-03-17":0,"2026-03-18":1,"2026-03-19":2,"2026-03-20":725,"2026-03-21":550},"京东官旗":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":0,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0,"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":0,"2026-03-17":0,"2026-03-18":0,"2026-03-19":0,"2026-03-20":9,"2026-03-21":36},"抖快":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":0,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0,"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":0,"2026-03-14":0,"2026-03-15":0,"2026-03-16":2,"2026-03-17":2,"2026-03-18":1,"2026-03-19":5,"2026-03-20":948,"2026-03-21":953}},"PadPro12.7":{"官网":{"2026-01-01":3,"2026-01-02":1,"2026-01-03":2,"2026-01-04":3,"2026-01-05":2,"2026-01-06":1,"2026-01-07":0,"2026-01-08":2,"2026-01-09":2,"2026-01-10":1,"2026-01-11":1,"2026-01-12":1,"2026-01-13":3,"2026-01-14":0,"2026-01-15":5,"2026-01-16":0,"2026-01-17":1,"2026-01-18":1,"2026-01-19":1,"2026-01-20":2,"2026-01-21":1,"2026-01-22":0,"2026-01-23":4,"2026-01-24":2,"2026-01-25":2,"2026-01-26":2,"2026-01-27":0,"2026-01-28":2,"2026-01-29":1,"2026-01-30":2,"2026-01-31":2,"2026-02-01":2,"2026-02-02":2,"2026-02-03":0,"2026-02-04":0,"2026-02-05":1,"2026-02-06":1,"2026-02-07":1,"2026-02-08":2,"2026-02-09":0,"2026-02-10":14,"2026-02-11":8,"2026-02-12":4,"2026-02-13":3,"2026-02-14":5,"2026-02-15":2,"2026-02-16":3,"2026-02-17":1,"2026-02-18":3,"2026-02-19":0,"2026-02-20":2,"2026-02-21":0,"2026-02-22":1,"2026-02-23":0,"2026-02-24":4,"2026-02-25":0,"2026-02-26":3,"2026-02-27":1,"2026-02-28":1,"2026-03-01":1,"2026-03-02":2,"2026-03-03":1,"2026-03-04":3,"2026-03-05":2,"2026-03-06":4,"2026-03-07":2,"2026-03-08":4,"2026-03-09":0,"2026-03-10":3,"2026-03-11":6,"2026-03-12":8,"2026-03-13":16,"2026-03-14":5,"2026-03-15":2,"2026-03-16":2,"2026-03-17":0,"2026-03-18":3,"2026-03-19":3,"2026-03-20":3,"2026-03-21":3},"天猫":{"2026-01-01":31,"2026-01-02":15,"2026-01-03":9,"2026-01-04":14,"2026-01-05":5,"2026-01-06":15,"2026-01-07":11,"2026-01-08":25,"2026-01-09":20,"2026-01-10":21,"2026-01-11":22,"2026-01-12":20,"2026-01-13":18,"2026-01-14":28,"2026-01-15":36,"2026-01-16":37,"2026-01-17":43,"2026-01-18":28,"2026-01-19":18,"2026-01-20":20,"2026-01-21":38,"2026-01-22":45,"2026-01-23":43,"2026-01-24":29,"2026-01-25":49,"2026-01-26":36,"2026-01-27":32,"2026-01-28":47,"2026-01-29":49,"2026-01-30":52,"2026-01-31":76,"2026-02-01":61,"2026-02-02":69,"2026-02-03":81,"2026-02-04":56,"2026-02-05":64,"2026-02-06":76,"2026-02-07":79,"2026-02-08":80,"2026-02-09":74,"2026-02-10":78,"2026-02-11":58,"2026-02-12":80,"2026-02-13":57,"2026-02-14":57,"2026-02-15":48,"2026-02-16":33,"2026-02-17":9,"2026-02-18":26,"2026-02-19":38,"2026-02-20":31,"2026-02-21":34,"2026-02-22":38,"2026-02-23":41,"2026-02-24":63,"2026-02-25":89,"2026-02-26":49,"2026-02-27":35,"2026-02-28":35,"2026-03-01":43,"2026-03-02":38,"2026-03-03":46,"2026-03-04":82,"2026-03-05":100,"2026-03-06":81,"2026-03-07":79,"2026-03-08":91,"2026-03-09":78,"2026-03-10":65,"2026-03-11":146,"2026-03-12":110,"2026-03-13":100,"2026-03-14":42,"2026-03-15":44,"2026-03-16":40,"2026-03-17":51,"2026-03-18":42,"2026-03-19":86,"2026-03-20":85,"2026-03-21":69},"京东官旗":{"2026-01-01":5,"2026-01-02":2,"2026-01-03":2,"2026-01-04":1,"2026-01-05":0,"2026-01-06":1,"2026-01-07":0,"2026-01-08":0,"2026-01-09":1,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":2,"2026-01-16":0,"2026-01-17":1,"2026-01-18":1,"2026-01-19":2,"2026-01-20":3,"2026-01-21":0,"2026-01-22":1,"2026-01-23":3,"2026-01-24":0,"2026-01-25":0,"2026-01-26":1,"2026-01-27":1,"2026-01-28":4,"2026-01-29":2,"2026-01-30":1,"2026-01-31":6,"2026-02-01":2,"2026-02-02":3,"2026-02-03":2,"2026-02-04":0,"2026-02-05":2,"2026-02-06":1,"2026-02-07":3,"2026-02-08":1,"2026-02-09":1,"2026-02-10":1,"2026-02-11":3,"2026-02-12":3,"2026-02-13":2,"2026-02-14":3,"2026-02-15":1,"2026-02-16":2,"2026-02-17":0,"2026-02-18":1,"2026-02-19":0,"2026-02-20":2,"2026-02-21":0,"2026-02-22":3,"2026-02-23":2,"2026-02-24":3,"2026-02-25":4,"2026-02-26":2,"2026-02-27":5,"2026-02-28":2,"2026-03-01":2,"2026-03-02":0,"2026-03-03":2,"2026-03-04":3,"2026-03-05":0,"2026-03-06":0,"2026-03-07":4,"2026-03-08":2,"2026-03-09":1,"2026-03-10":2,"2026-03-11":10,"2026-03-12":2,"2026-03-13":6,"2026-03-14":3,"2026-03-15":3,"2026-03-16":2,"2026-03-17":4,"2026-03-18":7,"2026-03-19":0,"2026-03-20":1,"2026-03-21":1},"抖快":{"2026-01-01":8,"2026-01-02":6,"2026-01-03":3,"2026-01-04":8,"2026-01-05":2,"2026-01-06":2,"2026-01-07":1,"2026-01-08":7,"2026-01-09":4,"2026-01-10":4,"2026-01-11":9,"2026-01-12":4,"2026-01-13":2,"2026-01-14":3,"2026-01-15":4,"2026-01-16":2,"2026-01-17":2,"2026-01-18":6,"2026-01-19":2,"2026-01-20":5,"2026-01-21":4,"2026-01-22":18,"2026-01-23":27,"2026-01-24":25,"2026-01-25":22,"2026-01-26":26,"2026-01-27":24,"2026-01-28":25,"2026-01-29":29,"2026-01-30":34,"2026-01-31":38,"2026-02-01":32,"2026-02-02":57,"2026-02-03":44,"2026-02-04":58,"2026-02-05":48,"2026-02-06":45,"2026-02-07":42,"2026-02-08":37,"2026-02-09":57,"2026-02-10":45,"2026-02-11":65,"2026-02-12":58,"2026-02-13":58,"2026-02-14":52,"2026-02-15":35,"2026-02-16":21,"2026-02-17":17,"2026-02-18":4,"2026-02-19":12,"2026-02-20":21,"2026-02-21":17,"2026-02-22":16,"2026-02-23":10,"2026-02-24":19,"2026-02-25":16,"2026-02-26":10,"2026-02-27":15,"2026-02-28":6,"2026-03-01":8,"2026-03-02":4,"2026-03-03":9,"2026-03-04":14,"2026-03-05":18,"2026-03-06":12,"2026-03-07":17,"2026-03-08":20,"2026-03-09":25,"2026-03-10":19,"2026-03-11":52,"2026-03-12":24,"2026-03-13":36,"2026-03-14":18,"2026-03-15":19,"2026-03-16":12,"2026-03-17":19,"2026-03-18":11,"2026-03-19":19,"2026-03-20":14,"2026-03-21":10}}},"channel_model_mix":{"官网":{"小新平板11":9604,"拯救者Y700 4代":2556,"PadProGT":2035,"小新pad 2023":519,"Y700 五代":320,"PadPro12.7":187,"YogaPadPro 14.5":95,"小新pad 2024":87,"小新平板12.1":56,"小新Pro13":12,"拯救者Y700 3代":9,"Pad 2024 舒视版":2,"Pad Pro12.7":2,"Y700 2代":1,"Pad Pro12.7 类纸屏":1,"小新ProGT13":1,"拯救者Y700 3代 超控版":1},"天猫":{"小新平板11":13723,"PadProGT":4000,"PadPro12.7":3989,"拯救者Y700 4代":2146,"Y700 五代":1284,"小新平板12.1":1032,"小新Pro13":113,"小新pad 2023":82,"YogaPadPro 14.5":44,"小新pad 2024":10,"YogaPadPro 12.7":4,"拯救者Y700 3代":3,"Pad Pro12.7":2,"拯救者Y700 3代 超控版":1},"京东官旗":{"小新平板11":5688,"PadProGT":1768,"小新平板12.1":173,"PadPro12.7":149,"拯救者Y700 4代":146,"Y700 五代":45,"小新pad 2023":34,"Pad Pro12.7":9,"YogaPadPro 14.5":8,"小新pad 2024":3,"小新Pro13":2,"YogaPadPro 12.7":1,"Y700 2代":1,"Pad 2024 舒视智学版":1,"小新pad plus 2023":1},"抖快":{"PadProGT":2882,"小新平板11":2760,"拯救者Y700 4代":2262,"Y700 五代":1911,"PadPro12.7":1653,"小新Pro13":62,"小新平板12.1":48,"小新pad 2023":20,"小新pad plus 2023":16,"Pad Studio":8,"拯救者Y700 3代":5,"小新pad 2024":4,"Pad Pro12.7":4,"Pad 2024 舒视版":2,"Y700 2代":1,"YogaPadPro 14.5":1,"拯救者Y700 3代 超控版":1}},"model_daily":{"小新平板11":{"2026-01-01":187,"2026-01-02":120,"2026-01-03":146,"2026-01-04":151,"2026-01-05":194,"2026-01-06":246,"2026-01-07":389,"2026-01-08":547,"2026-01-09":444,"2026-01-10":468,"2026-01-11":440,"2026-01-12":494,"2026-01-13":473,"2026-01-14":475,"2026-01-15":440,"2026-01-16":544,"2026-01-17":591,"2026-01-18":620,"2026-01-19":591,"2026-01-20":523,"2026-01-21":581,"2026-01-22":546,"2026-01-23":700,"2026-01-24":690,"2026-01-25":602,"2026-01-26":595,"2026-01-27":699,"2026-01-28":1046,"2026-01-29":871,"2026-01-30":598,"2026-01-31":447,"2026-02-01":450,"2026-02-02":397,"2026-02-03":485,"2026-02-04":393,"2026-02-05":363,"2026-02-06":377,"2026-02-07":462,"2026-02-08":451,"2026-02-09":450,"2026-02-10":372,"2026-02-11":409,"2026-02-12":429,"2026-02-13":405,"2026-02-14":385,"2026-02-15":323,"2026-02-16":228,"2026-02-17":124,"2026-02-18":131,"2026-02-19":152,"2026-02-20":161,"2026-02-21":130,"2026-02-22":108,"2026-02-23":139,"2026-02-24":202,"2026-02-25":277,"2026-02-26":420,"2026-02-27":378,"2026-02-28":371,"2026-03-01":511,"2026-03-02":400,"2026-03-03":317,"2026-03-04":316,"2026-03-05":373,"2026-03-06":370,"2026-03-07":348,"2026-03-08":335,"2026-03-09":302,"2026-03-10":316,"2026-03-11":644,"2026-03-12":540,"2026-03-13":526,"2026-03-14":254,"2026-03-15":259,"2026-03-16":298,"2026-03-17":236,"2026-03-18":263,"2026-03-19":318,"2026-03-20":389,"2026-03-21":307},"小新平板12.1":{"2026-01-01":3,"2026-01-02":3,"2026-01-03":2,"2026-01-04":5,"2026-01-05":5,"2026-01-06":2,"2026-01-07":3,"2026-01-08":4,"2026-01-09":2,"2026-01-10":1,"2026-01-11":2,"2026-01-12":4,"2026-01-13":2,"2026-01-14":2,"2026-01-15":3,"2026-01-16":2,"2026-01-17":7,"2026-01-18":3,"2026-01-19":1,"2026-01-20":3,"2026-01-21":6,"2026-01-22":3,"2026-01-23":6,"2026-01-24":26,"2026-01-25":45,"2026-01-26":53,"2026-01-27":59,"2026-01-28":61,"2026-01-29":35,"2026-01-30":63,"2026-01-31":68,"2026-02-01":53,"2026-02-02":78,"2026-02-03":75,"2026-02-04":73,"2026-02-05":62,"2026-02-06":68,"2026-02-07":74,"2026-02-08":76,"2026-02-09":68,"2026-02-10":42,"2026-02-11":19,"2026-02-12":18,"2026-02-13":14,"2026-02-14":10,"2026-02-15":10,"2026-02-16":6,"2026-02-17":5,"2026-02-18":4,"2026-02-19":3,"2026-02-20":4,"2026-02-21":3,"2026-02-22":2,"2026-02-23":1,"2026-02-24":2,"2026-02-25":4,"2026-02-26":4,"2026-02-27":9,"2026-02-28":6,"2026-03-01":124,"2026-03-02":179,"2026-03-03":221,"2026-03-04":296,"2026-03-05":336,"2026-03-06":411,"2026-03-07":451,"2026-03-08":469,"2026-03-09":422,"2026-03-10":357,"2026-03-11":648,"2026-03-12":442,"2026-03-13":492,"2026-03-14":231,"2026-03-15":209,"2026-03-16":216,"2026-03-17":178,"2026-03-18":197,"2026-03-19":282,"2026-03-20":406,"2026-03-21":330},"PadProGT":{"2026-01-01":144,"2026-01-02":112,"2026-01-03":134,"2026-01-04":133,"2026-01-05":98,"2026-01-06":117,"2026-01-07":106,"2026-01-08":95,"2026-01-09":89,"2026-01-10":93,"2026-01-11":70,"2026-01-12":74,"2026-01-13":67,"2026-01-14":50,"2026-01-15":86,"2026-01-16":91,"2026-01-17":97,"2026-01-18":137,"2026-01-19":115,"2026-01-20":93,"2026-01-21":98,"2026-01-22":107,"2026-01-23":85,"2026-01-24":83,"2026-01-25":104,"2026-01-26":82,"2026-01-27":82,"2026-01-28":105,"2026-01-29":146,"2026-01-30":182,"2026-01-31":172,"2026-02-01":173,"2026-02-02":183,"2026-02-03":180,"2026-02-04":171,"2026-02-05":183,"2026-02-06":176,"2026-02-07":189,"2026-02-08":222,"2026-02-09":192,"2026-02-10":163,"2026-02-11":169,"2026-02-12":190,"2026-02-13":185,"2026-02-14":137,"2026-02-15":115,"2026-02-16":59,"2026-02-17":22,"2026-02-18":30,"2026-02-19":40,"2026-02-20":38,"2026-02-21":51,"2026-02-22":56,"2026-02-23":58,"2026-02-24":100,"2026-02-25":124,"2026-02-26":102,"2026-02-27":115,"2026-02-28":217,"2026-03-01":371,"2026-03-02":322,"2026-03-03":305,"2026-03-04":240,"2026-03-05":230,"2026-03-06":236,"2026-03-07":288,"2026-03-08":282,"2026-03-09":231,"2026-03-10":279,"2026-03-11":510,"2026-03-12":360,"2026-03-13":442,"2026-03-14":188,"2026-03-15":217,"2026-03-16":186,"2026-03-17":173,"2026-03-18":199,"2026-03-19":203,"2026-03-20":228,"2026-03-21":220},"拯救者Y700 4代":{"2026-01-01":31,"2026-01-02":18,"2026-01-03":17,"2026-01-04":25,"2026-01-05":23,"2026-01-06":62,"2026-01-07":172,"2026-01-08":231,"2026-01-09":208,"2026-01-10":242,"2026-01-11":218,"2026-01-12":212,"2026-01-13":201,"2026-01-14":188,"2026-01-15":218,"2026-01-16":282,"2026-01-17":255,"2026-01-18":320,"2026-01-19":274,"2026-01-20":312,"2026-01-21":344,"2026-01-22":330,"2026-01-23":306,"2026-01-24":202,"2026-01-25":210,"2026-01-26":173,"2026-01-27":171,"2026-01-28":177,"2026-01-29":202,"2026-01-30":212,"2026-01-31":242,"2026-02-01":177,"2026-02-02":168,"2026-02-03":131,"2026-02-04":153,"2026-02-05":137,"2026-02-06":159,"2026-02-07":165,"2026-02-08":115,"2026-02-09":99,"2026-02-10":98,"2026-02-11":82,"2026-02-12":78,"2026-02-13":92,"2026-02-14":88,"2026-02-15":125,"2026-02-16":85,"2026-02-17":50,"2026-02-18":82,"2026-02-19":92,"2026-02-20":83,"2026-02-21":58,"2026-02-22":51,"2026-02-23":37,"2026-02-24":69,"2026-02-25":102,"2026-02-26":143,"2026-02-27":129,"2026-02-28":151,"2026-03-01":180,"2026-03-02":205,"2026-03-03":173,"2026-03-04":211,"2026-03-05":166,"2026-03-06":188,"2026-03-07":229,"2026-03-08":210,"2026-03-09":212,"2026-03-10":203,"2026-03-11":576,"2026-03-12":498,"2026-03-13":454,"2026-03-14":180,"2026-03-15":204,"2026-03-16":297,"2026-03-17":213,"2026-03-18":207,"2026-03-19":195,"2026-03-20":402,"2026-03-21":326},"Y700 五代":{"2026-01-01":0,"2026-01-02":0,"2026-01-03":0,"2026-01-04":0,"2026-01-05":0,"2026-01-06":0,"2026-01-07":0,"2026-01-08":0,"2026-01-09":0,"2026-01-10":0,"2026-01-11":0,"2026-01-12":0,"2026-01-13":0,"2026-01-14":0,"2026-01-15":0,"2026-01-16":0,"2026-01-17":0,"2026-01-18":0,"2026-01-19":0,"2026-01-20":0,"2026-01-21":0,"2026-01-22":0,"2026-01-23":0,"2026-01-24":0,"2026-01-25":0,"2026-01-26":0,"2026-01-27":0,"2026-01-28":0,"2026-01-29":0,"2026-01-30":0,"2026-01-31":0,"2026-02-01":0,"2026-02-02":0,"2026-02-03":0,"2026-02-04":0,"2026-02-05":0,"2026-02-06":0,"2026-02-07":0,"2026-02-08":0,"2026-02-09":0,"2026-02-10":0,"2026-02-11":0,"2026-02-12":0,"2026-02-13":0,"2026-02-14":0,"2026-02-15":0,"2026-02-16":0,"2026-02-17":0,"2026-02-18":0,"2026-02-19":0,"2026-02-20":0,"2026-02-21":0,"2026-02-22":3,"2026-02-23":0,"2026-02-24":0,"2026-02-25":0,"2026-02-26":0,"2026-02-27":0,"2026-02-28":0,"2026-03-01":0,"2026-03-02":0,"2026-03-03":0,"2026-03-04":0,"2026-03-05":0,"2026-03-06":0,"2026-03-07":0,"2026-03-08":0,"2026-03-09":0,"2026-03-10":0,"2026-03-11":0,"2026-03-12":0,"2026-03-13":2,"2026-03-14":0,"2026-03-15":1,"2026-03-16":4,"2026-03-17":2,"2026-03-18":2,"2026-03-19":30,"2026-03-20":1848,"2026-03-21":1673},"PadPro12.7":{"2026-01-01":65,"2026-01-02":36,"2026-01-03":19,"2026-01-04":29,"2026-01-05":10,"2026-01-06":19,"2026-01-07":12,"2026-01-08":34,"2026-01-09":27,"2026-01-10":27,"2026-01-11":32,"2026-01-12":27,"2026-01-13":23,"2026-01-14":31,"2026-01-15":47,"2026-01-16":39,"2026-01-17":48,"2026-01-18":36,"2026-01-19":24,"2026-01-20":32,"2026-01-21":43,"2026-01-22":64,"2026-01-23":78,"2026-01-24":56,"2026-01-25":73,"2026-01-26":66,"2026-01-27":58,"2026-01-28":78,"2026-01-29":81,"2026-01-30":89,"2026-01-31":123,"2026-02-01":97,"2026-02-02":131,"2026-02-03":127,"2026-02-04":114,"2026-02-05":115,"2026-02-06":123,"2026-02-07":125,"2026-02-08":120,"2026-02-09":132,"2026-02-10":138,"2026-02-11":134,"2026-02-12":145,"2026-02-13":120,"2026-02-14":117,"2026-02-15":86,"2026-02-16":59,"2026-02-17":27,"2026-02-18":34,"2026-02-19":50,"2026-02-20":56,"2026-02-21":51,"2026-02-22":58,"2026-02-23":53,"2026-02-24":89,"2026-02-25":109,"2026-02-26":64,"2026-02-27":56,"2026-02-28":44,"2026-03-01":54,"2026-03-02":44,"2026-03-03":58,"2026-03-04":102,"2026-03-05":120,"2026-03-06":97,"2026-03-07":102,"2026-03-08":117,"2026-03-09":104,"2026-03-10":89,"2026-03-11":214,"2026-03-12":144,"2026-03-13":158,"2026-03-14":68,"2026-03-15":68,"2026-03-16":56,"2026-03-17":75,"2026-03-18":63,"2026-03-19":108,"2026-03-20":103,"2026-03-21":83}}}};
+        let currentMonth = "3月";
+
+        function init() {
+            renderMonthSlicer();
+            updateDashboard(currentMonth);
+
+            const now = new Date();
+            document.getElementById('genTime').textContent =
+                now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                String(now.getDate()).padStart(2, '0') + ' ' +
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+
+        function renderMonthSlicer() {
+            const container = document.getElementById('monthSlicer');
+            container.innerHTML = '';
+
+            Object.keys(dashboardData).forEach(month => {
+                const btn = document.createElement('button');
+                btn.className = 'month-btn' + (month === currentMonth ? ' active' : '');
+                btn.textContent = month;
+                btn.onclick = () => {
+                    console.log('Button clicked for month:', month);
+                    currentMonth = month;
+                    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    console.log('Calling updateDashboard with:', month);
+                    updateDashboard(month);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function updateDashboard(month) {
+            console.log('updateDashboard called with month:', month);
+            // 更新全局 currentMonth 变量
+            currentMonth = month;
+            console.log('currentMonth updated to:', currentMonth);
+            const data = dashboardData[month];
+
+            // 更新标题
+            document.getElementById('headerTitle').textContent = month + '直营平板销售';
+            document.getElementById('headerSubtitle').innerHTML = '数据时间：2026年' + month + ' | 生成时间：<span id="genTime">' + document.getElementById('genTime').textContent + '</span>';
+            document.querySelectorAll('.month-num').forEach(el => el.textContent = data.month_num);
+
+            // 更新倒计时
+            updateCountdown(data.month_num, data.last_day);
+
+            // 更新达成进度
+            document.getElementById('achievementRate').textContent = data.achievement_rate + '%';
+            document.getElementById('progressBar').style.width = Math.min(data.achievement_rate, 100) + '%';
+            document.getElementById('currentSales').textContent = data.actual_total;
+
+            // 更新目标输入框的值（优先使用localStorage保存的值）
+            const savedTargets = localStorage.getItem('padDashboardTargets');
+            let targetValue = data.targets['总目标'];
+            if (savedTargets) {
+                const targetsData = JSON.parse(savedTargets);
+                if (targetsData[month] && targetsData[month].targets && targetsData[month].targets['总目标']) {
+                    targetValue = targetsData[month].targets['总目标'];
+                }
+            }
+            document.getElementById('targetSales').value = Math.round(targetValue * 1000).toLocaleString();
+
+            // 更新渠道卡片
+            renderChannelCards(data);
+            
+            // Q4看板：只显示前4行 + 最后2行（渠道机型分布Mix）
+            if (month === 'FY25 Q4') {
+                // 获取所有chart-row（排除新品行，它们有独立的ID控制）
+                const allRows = document.querySelectorAll('.chart-row:not(#y700-5th-row):not(#xiaoxin-pro13-row)');
+                const totalRows = allRows.length;
+
+                allRows.forEach((row, index) => {
+                    // 显示前4行 (0-3) 和最后2行
+                    if (index < 4 || index >= totalRows - 2) {
+                        row.style.display = 'grid';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // 强制隐藏分店铺走势行（通过标题内容识别）
+                document.querySelectorAll('.chart-row').forEach(row => {
+                    const title = row.querySelector('.chart-title');
+                    if (title && title.textContent.includes('按店铺')) {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // 确保新品行隐藏
+                const y7005thRow = document.getElementById('y700-5th-row');
+                const xiaoxinPro13Row = document.getElementById('xiaoxin-pro13-row');
+                if (y7005thRow) y7005thRow.style.display = 'none';
+                if (xiaoxinPro13Row) xiaoxinPro13Row.style.display = 'none';
+            } else {
+                // 月度看板：显示所有行
+                const rows = document.querySelectorAll('.chart-row');
+                rows.forEach(row => row.style.display = 'grid');
+                // 3月显示新品行
+                const y7005thRow = document.getElementById('y700-5th-row');
+                const xiaoxinPro13Row = document.getElementById('xiaoxin-pro13-row');
+                if (y7005thRow) y7005thRow.style.display = month === '3月' ? 'grid' : 'none';
+                if (xiaoxinPro13Row) xiaoxinPro13Row.style.display = month === '3月' ? 'grid' : 'none';
+            }
+
+            // 更新图表，传入当前月份
+            renderCharts(data, month);
+        }
+
+        function updateCountdown(monthNum, lastDay) {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1; // 1-12
+
+            // 如果当前月份大于目标月份，说明该月已结束
+            if (currentMonth > monthNum) {
+                document.getElementById('cd-months').textContent = 0;
+                document.getElementById('cd-days').textContent = 0;
+                document.getElementById('cd-hours').textContent = '00';
+                return;
+            }
+
+            // 如果当前月份等于目标月份，计算到月底的剩余时间
+            if (currentMonth === monthNum) {
+                const endDate = new Date(currentYear, monthNum - 1, lastDay, 23, 59, 59);
+                const diff = endDate - now;
+
+                if (diff > 0) {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+                    document.getElementById('cd-months').textContent = 0;
+                    document.getElementById('cd-days').textContent = days;
+                    document.getElementById('cd-hours').textContent = String(hours).padStart(2, '0');
+                } else {
+                    // 已到月底最后一天之后
+                    document.getElementById('cd-months').textContent = 0;
+                    document.getElementById('cd-days').textContent = 0;
+                    document.getElementById('cd-hours').textContent = '00';
+                }
+                return;
+            }
+
+            // 如果当前月份小于目标月份（未来月份），显示该月总天数
+            // 这种情况通常不会发生，因为数据是历史的
+            document.getElementById('cd-months').textContent = 0;
+            document.getElementById('cd-days').textContent = lastDay;
+            document.getElementById('cd-hours').textContent = '00';
+        }
+
+        function renderChannelCards(data) {
+            const container = document.getElementById('channelRow');
+            container.innerHTML = '';
+
+            const channels = ['官网', '天猫', '京东官旗', '抖快'];
+            
+            // 获取当前月份
+            const currentMonthKey = document.getElementById('headerTitle').textContent.replace('直营平板销售', '');
+            
+            // 从localStorage获取保存的目标值
+            let savedChannelTargets = {};
+            const saved = localStorage.getItem('padDashboardTargets');
+            if (saved) {
+                const targetsData = JSON.parse(saved);
+                if (targetsData[currentMonthKey] && targetsData[currentMonthKey].channel_targets) {
+                    savedChannelTargets = targetsData[currentMonthKey].channel_targets;
+                }
+            }
+
+            channels.forEach(ch => {
+                const actual = data.channels[ch] || 0;
+                // 优先使用localStorage保存的目标值
+                const target = savedChannelTargets[ch] !== undefined ? savedChannelTargets[ch] : data.channel_targets[ch];
+                const rate = target > 0 ? Math.round((actual / target) * 100) : 0;
+
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerHTML = `
+                    <div class="channel-title">FY26 ${data.month_num}月${ch}PO</div>
+                    <div class="channel-percent">${rate}%</div>
+                    <div class="channel-progress">
+                        <div class="channel-progress-fill" style="width: ${Math.min(rate, 100)}%"></div>
+                    </div>
+                    <div class="channel-values">
+                        <span class="value-current">${(actual * 1000).toLocaleString()}</span>
+                        <span style="color: #ccc;">|</span>
+                        <span class="value-target">目标 <input type="text" value="${(target * 1000).toLocaleString()}" onchange="updateChannelTarget('${ch}', this.value)"></span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderCharts(data, month) {
+            // 店铺Mix饼图
+            const storeColors = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1'];
+            const storeData = [{
+                values: Object.values(data.store_mix),
+                labels: Object.keys(data.store_mix),
+                type: 'pie',
+                textinfo: 'label+percent',
+                textposition: 'inside',
+                marker: { colors: storeColors },
+                hovertemplate: '%{label}<br>%{percent}<br>%{value}K<extra></extra>',
+                showlegend: false
+            }];
+            Plotly.newPlot('store-mix-chart', storeData, {
+                margin: { l: 10, r: 10, t: 10, b: 10 },
+                height: 180,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 重点机型分布Mix（甜甜圈图）
+            const modelColors = ['#1890ff', '#52c41a', '#722ed1', '#faad14', '#f5222d', '#13c2c2'];
+            const modelNames = Object.keys(data.models.key_models).slice(0, 6);
+            const modelValues = Object.values(data.models.key_models).slice(0, 6);
+            const modelMixData = [{
+                values: modelValues,
+                labels: modelNames,
+                type: 'pie',
+                hole: 0.4,
+                textinfo: 'percent',
+                textposition: 'inside',
+                marker: { colors: modelColors },
+                hovertemplate: '%{label}<br>%{percent}<br>%{value}台<extra></extra>',
+                showlegend: true,
+                legend: { orientation: 'h', y: -0.1 }
+            }];
+            Plotly.newPlot('model-mix-chart', modelMixData, {
+                margin: { l: 20, r: 20, t: 20, b: 60 },
+                height: 300,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 重点机型日均销售（横向条形图）
+            const sortedModels = Object.entries(data.models.daily_avg).sort((a, b) => a[1] - b[1]);
+            const barData = [{
+                y: sortedModels.map(x => x[0]),
+                x: sortedModels.map(x => x[1]),
+                type: 'bar',
+                orientation: 'h',
+                marker: { color: '#1890ff' },
+                text: sortedModels.map(x => x[1]),
+                textposition: 'outside',
+                hovertemplate: '%{y}<br>日均: %{x}台<extra></extra>'
+            }];
+            Plotly.newPlot('model-daily-chart', barData, {
+                margin: { l: 150, r: 60, t: 20, b: 40 },
+                height: 300,
+                xaxis: { title: '日均销量（台）', gridcolor: '#f0f0f0' },
+                yaxis: { automargin: true },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 每日销量走势
+            document.getElementById('last7avg').textContent = data.last_7_avg.toLocaleString();
+            document.getElementById('monthlyAvg').textContent = data.monthly_avg.toLocaleString();
+
+            const dailyDates = Object.keys(data.daily);
+            const dailyValues = Object.values(data.daily);
+
+            // 格式化日期函数
+            const formatDate = (d) => {
+                const parts = d.split('-');
+                return parts[0] + '/' + parseInt(parts[1]) + '/' + parseInt(parts[2]);
+            };
+
+            // 渠道颜色映射（全局定义，供后续使用）
+            const channelColors = {'京东官旗': '#1890ff', '官网': '#52c41a', '天猫': '#faad14', '抖快': '#f5222d'};
+
+            const dailyData = [{
+                x: dailyDates.map(formatDate),
+                y: dailyValues,
+                type: 'bar',
+                marker: { color: '#1890ff' },
+                text: dailyValues.map(v => v.toString()),
+                textposition: 'outside',
+                textfont: { size: 11, color: '#333', family: 'Arial, sans-serif' },
+                hovertemplate: '%{x}<br>销量: %{y}台<extra></extra>'
+            }];
+            Plotly.newPlot('daily-chart', dailyData, {
+                margin: { l: 60, r: 20, t: 60, b: 80 },
+                height: 360,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickmode: 'linear',
+                    dtick: 1,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { title: '销量（台）', showgrid: false, range: [0, Math.max(...dailyValues) * 1.15] },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // Bay Day销售情况 - 只在有channel_daily数据时渲染
+            if (!data.channel_daily) {
+                console.log('No channel_daily data for', month, '- skipping Bay Day charts');
+            } else {
+            // Bay Day销售情况 - 京东官旗
+            const jdDaily = data.channel_daily['京东官旗'];
+            const jdDates = Object.keys(jdDaily);
+            const jdValues = Object.values(jdDaily);
+            const jdMonthlyAvg = Math.round(jdValues.reduce((a, b) => a + b, 0) / jdValues.length);
+            const jdLast7Avg = Math.round(jdValues.slice(-7).reduce((a, b) => a + b, 0) / Math.min(7, jdValues.length));
+
+            document.getElementById('jd-monthly-avg').textContent = jdMonthlyAvg;
+            document.getElementById('jd-last7-avg').textContent = jdLast7Avg;
+
+            const jdMax = Math.max(...jdValues);
+            const jdBayData = [{
+                x: jdDates.map(formatDate),
+                y: jdValues,
+                type: 'scatter',
+                mode: 'lines+markers+text',
+                line: { color: '#1890ff', width: 2 },
+                marker: { size: 6, color: '#1890ff' },
+                text: jdValues.map((v, i) => i % 3 === 0 || i === jdValues.length - 1 ? v : ''),
+                textposition: 'top center',
+                textfont: { size: 10 },
+                hovertemplate: '%{x}<br>销量: %{y}台<extra></extra>'
+            }];
+            Plotly.newPlot('jd-bayday-chart', jdBayData, {
+                margin: { l: 50, r: 20, t: 50, b: 80 },
+                height: 330,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickmode: 'linear',
+                    dtick: 2,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, range: [0, jdMax * 1.2] },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                showlegend: false
+            }, {responsive: true});
+
+            // Bay Day销售情况 - 官网
+            const gwDaily = data.channel_daily['官网'];
+            const gwDates = Object.keys(gwDaily);
+            const gwValues = Object.values(gwDaily);
+            const gwMonthlyAvg = Math.round(gwValues.reduce((a, b) => a + b, 0) / gwValues.length);
+            const gwLast7Avg = Math.round(gwValues.slice(-7).reduce((a, b) => a + b, 0) / Math.min(7, gwValues.length));
+
+            document.getElementById('gw-monthly-avg').textContent = gwMonthlyAvg;
+            document.getElementById('gw-last7-avg').textContent = gwLast7Avg;
+
+            const gwMax = Math.max(...gwValues);
+            const gwBayData = [{
+                x: gwDates.map(formatDate),
+                y: gwValues,
+                type: 'scatter',
+                mode: 'lines+markers+text',
+                line: { color: '#52c41a', width: 2 },
+                marker: { size: 6, color: '#52c41a' },
+                text: gwValues.map((v, i) => i % 3 === 0 || i === gwValues.length - 1 ? v : ''),
+                textposition: 'top center',
+                textfont: { size: 10 },
+                hovertemplate: '%{x}<br>销量: %{y}台<extra></extra>'
+            }];
+            Plotly.newPlot('gw-bayday-chart', gwBayData, {
+                margin: { l: 50, r: 20, t: 50, b: 80 },
+                height: 330,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickmode: 'linear',
+                    dtick: 2,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, range: [0, gwMax * 1.2] },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                showlegend: false
+            }, {responsive: true});
+
+            // 第六行：天猫Bay Day
+            const tmDaily = data.channel_daily['天猫'];
+            const tmDates = Object.keys(tmDaily);
+            const tmValues = Object.values(tmDaily);
+            const tmMonthlyAvg = Math.round(tmValues.reduce((a, b) => a + b, 0) / tmValues.length);
+            const tmLast7Avg = Math.round(tmValues.slice(-7).reduce((a, b) => a + b, 0) / Math.min(7, tmValues.length));
+
+            document.getElementById('tm-monthly-avg').textContent = tmMonthlyAvg;
+            document.getElementById('tm-last7-avg').textContent = tmLast7Avg;
+
+            const tmMax = Math.max(...tmValues);
+            const tmBayData = [{
+                x: tmDates.map(formatDate),
+                y: tmValues,
+                type: 'scatter',
+                mode: 'lines+markers+text',
+                line: { color: '#faad14', width: 2 },
+                marker: { size: 6, color: '#faad14' },
+                text: tmValues.map((v, i) => i % 3 === 0 || i === tmValues.length - 1 ? v : ''),
+                textposition: 'top center',
+                textfont: { size: 10 },
+                hovertemplate: '%{x}<br>销量: %{y}台<extra></extra>'
+            }];
+            Plotly.newPlot('tm-bayday-chart', tmBayData, {
+                margin: { l: 50, r: 20, t: 50, b: 80 },
+                height: 330,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickmode: 'linear',
+                    dtick: 2,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, range: [0, tmMax * 1.2] },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                showlegend: false
+            }, {responsive: true});
+
+            // 第六行：抖音Bay Day
+            const dyDaily = data.channel_daily['抖快'];
+            const dyDates = Object.keys(dyDaily);
+            const dyValues = Object.values(dyDaily);
+            const dyMonthlyAvg = Math.round(dyValues.reduce((a, b) => a + b, 0) / dyValues.length);
+            const dyLast7Avg = Math.round(dyValues.slice(-7).reduce((a, b) => a + b, 0) / Math.min(7, dyValues.length));
+
+            document.getElementById('dy-monthly-avg').textContent = dyMonthlyAvg;
+            document.getElementById('dy-last7-avg').textContent = dyLast7Avg;
+
+            const dyMax = Math.max(...dyValues);
+            const dyBayData = [{
+                x: dyDates.map(formatDate),
+                y: dyValues,
+                type: 'scatter',
+                mode: 'lines+markers+text',
+                line: { color: '#f5222d', width: 2 },
+                marker: { size: 6, color: '#f5222d' },
+                text: dyValues.map((v, i) => i % 3 === 0 || i === dyValues.length - 1 ? v : ''),
+                textposition: 'top center',
+                textfont: { size: 10 },
+                hovertemplate: '%{x}<br>销量: %{y}台<extra></extra>'
+            }];
+            Plotly.newPlot('dy-bayday-chart', dyBayData, {
+                margin: { l: 50, r: 20, t: 50, b: 80 },
+                height: 330,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickmode: 'linear',
+                    dtick: 2,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, range: [0, dyMax * 1.2] },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                showlegend: false
+            }, {responsive: true});
+            } // end of if (data.channel_daily)
+
+            // 第七行：重点产品分天销售走势
+            const topProducts = Object.keys(data.models.key_models).slice(0, 5);
+            const productColors = ['#1890ff', '#52c41a', '#722ed1', '#faad14', '#f5222d'];
+            const productTrendData = topProducts.map((prod, idx) => {
+                // 使用真实的机型每日销售数据
+                const prodDaily = data.model_daily[prod] || {};
+                const dates = Object.keys(prodDaily).sort((a, b) => new Date(a) - new Date(b));
+                const values = dates.map(d => prodDaily[d] || 0);
+
+                return {
+                    x: dates.map(formatDate),
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: prod,
+                    line: { color: productColors[idx], width: 2 },
+                    marker: { size: 5, color: productColors[idx] }
+                };
+            });
+
+            Plotly.newPlot('product-trend-chart', productTrendData, {
+                margin: { l: 60, r: 20, t: 40, b: 80 },
+                height: 400,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    title: '日期',
+                    tickfont: { size: 10 }
+                },
+                yaxis: {
+                    showgrid: false,
+                    title: '销量（台）'
+                },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 第八行：小新Pad11分天销售走势（按店铺）
+            const pad11Data = data.model_channel_daily['小新平板11'] || {};
+            const pad11Dates = Object.keys(pad11Data).length > 0 ? Object.keys(Object.values(pad11Data)[0]) : [];
+
+            let pad11TotalSales = 0;
+            let pad11Last7Total = 0;
+            let pad11Count = 0;
+
+            const pad11Traces = ['京东官旗', '官网', '天猫', '抖快'].map(ch => {
+                const chData = pad11Data[ch] || {};
+                const dates = Object.keys(chData).sort((a, b) => new Date(a) - new Date(b));
+                const values = dates.map(d => chData[d] || 0);
+
+                // 计算统计
+                values.forEach((v, i) => {
+                    pad11TotalSales += v;
+                    if (i >= values.length - 7) pad11Last7Total += v;
+                });
+                pad11Count = Math.max(pad11Count, values.length);
+
+                return {
+                    x: dates.map(formatDate),
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: ch,
+                    line: { color: channelColors[ch], width: 2 },
+                    marker: { size: 5, color: channelColors[ch] }
+                };
+            });
+
+            document.getElementById('pad11-monthly-avg').textContent = pad11Count > 0 ? Math.round(pad11TotalSales / pad11Count) : 0;
+            document.getElementById('pad11-last7-avg').textContent = pad11Count > 0 ? Math.round(pad11Last7Total / Math.min(7, pad11Count)) : 0;
+
+            Plotly.newPlot('pad11-trend-chart', pad11Traces, {
+                margin: { l: 60, r: 20, t: 40, b: 80 },
+                height: 400,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, title: '销量（台）' },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 第九行：小新平板12.1分天销售走势（按店铺）
+            const pad121Data = data.model_channel_daily['小新平板12.1'] || {};
+            let pad121TotalSales = 0;
+            let pad121Last7Total = 0;
+            let pad121Count = 0;
+
+            const pad121Traces = ['京东官旗', '官网', '天猫', '抖快'].map(ch => {
+                const chData = pad121Data[ch] || {};
+                const dates = Object.keys(chData).sort((a, b) => new Date(a) - new Date(b));
+                const values = dates.map(d => chData[d] || 0);
+
+                values.forEach((v, i) => {
+                    pad121TotalSales += v;
+                    if (i >= values.length - 7) pad121Last7Total += v;
+                });
+                pad121Count = Math.max(pad121Count, values.length);
+
+                return {
+                    x: dates.map(formatDate),
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: ch,
+                    line: { color: channelColors[ch], width: 2 },
+                    marker: { size: 5, color: channelColors[ch] }
+                };
+            });
+
+            document.getElementById('pad121-monthly-avg').textContent = pad121Count > 0 ? Math.round(pad121TotalSales / pad121Count) : 0;
+            document.getElementById('pad121-last7-avg').textContent = pad121Count > 0 ? Math.round(pad121Last7Total / Math.min(7, pad121Count)) : 0;
+
+            Plotly.newPlot('pad121-trend-chart', pad121Traces, {
+                margin: { l: 60, r: 20, t: 40, b: 80 },
+                height: 400,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, title: '销量（台）' },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 第十行：PadPro12.7分天销售走势（按店铺）
+            const padpro127Data = data.model_channel_daily['PadPro12.7'] || {};
+            let padpro127TotalSales = 0;
+            let padpro127Last7Total = 0;
+            let padpro127Count = 0;
+
+            const padpro127Traces = ['京东官旗', '官网', '天猫', '抖快'].map(ch => {
+                const chData = padpro127Data[ch] || {};
+                const dates = Object.keys(chData).sort((a, b) => new Date(a) - new Date(b));
+                const values = dates.map(d => chData[d] || 0);
+
+                values.forEach((v, i) => {
+                    padpro127TotalSales += v;
+                    if (i >= values.length - 7) padpro127Last7Total += v;
+                });
+                padpro127Count = Math.max(padpro127Count, values.length);
+
+                return {
+                    x: dates.map(formatDate),
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: ch,
+                    line: { color: channelColors[ch], width: 2 },
+                    marker: { size: 5, color: channelColors[ch] }
+                };
+            });
+
+            document.getElementById('padpro127-monthly-avg').textContent = padpro127Count > 0 ? Math.round(padpro127TotalSales / padpro127Count) : 0;
+            document.getElementById('padpro127-last7-avg').textContent = padpro127Count > 0 ? Math.round(padpro127Last7Total / Math.min(7, padpro127Count)) : 0;
+
+            Plotly.newPlot('padpro127-trend-chart', padpro127Traces, {
+                margin: { l: 60, r: 20, t: 40, b: 80 },
+                height: 400,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, title: '销量（台）' },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 第十一行：PadProGT分天销售走势（按店铺）
+            const padprogtData = data.model_channel_daily['PadProGT'] || {};
+            let padprogtTotalSales = 0;
+            let padprogtLast7Total = 0;
+            let padprogtCount = 0;
+
+            const padprogtTraces = ['京东官旗', '官网', '天猫', '抖快'].map(ch => {
+                const chData = padprogtData[ch] || {};
+                const dates = Object.keys(chData).sort((a, b) => new Date(a) - new Date(b));
+                const values = dates.map(d => chData[d] || 0);
+
+                values.forEach((v, i) => {
+                    padprogtTotalSales += v;
+                    if (i >= values.length - 7) padprogtLast7Total += v;
+                });
+                padprogtCount = Math.max(padprogtCount, values.length);
+
+                return {
+                    x: dates.map(formatDate),
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: ch,
+                    line: { color: channelColors[ch], width: 2 },
+                    marker: { size: 5, color: channelColors[ch] }
+                };
+            });
+
+            document.getElementById('padprogt-monthly-avg').textContent = padprogtCount > 0 ? Math.round(padprogtTotalSales / padprogtCount) : 0;
+            document.getElementById('padprogt-last7-avg').textContent = padprogtCount > 0 ? Math.round(padprogtLast7Total / Math.min(7, padprogtCount)) : 0;
+
+            Plotly.newPlot('padprogt-trend-chart', padprogtTraces, {
+                margin: { l: 60, r: 20, t: 40, b: 80 },
+                height: 400,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, title: '销量（台）' },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 第十二行：拯救者Y700 4代分天销售走势（按店铺）
+            const y700Data = data.model_channel_daily['拯救者Y700 4代'] || {};
+            let y700TotalSales = 0;
+            let y700Last7Total = 0;
+            let y700Count = 0;
+
+            const y700Traces = ['京东官旗', '官网', '天猫', '抖快'].map(ch => {
+                const chData = y700Data[ch] || {};
+                const dates = Object.keys(chData).sort((a, b) => new Date(a) - new Date(b));
+                const values = dates.map(d => chData[d] || 0);
+
+                values.forEach((v, i) => {
+                    y700TotalSales += v;
+                    if (i >= values.length - 7) y700Last7Total += v;
+                });
+                y700Count = Math.max(y700Count, values.length);
+
+                return {
+                    x: dates.map(formatDate),
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: ch,
+                    line: { color: channelColors[ch], width: 2 },
+                    marker: { size: 5, color: channelColors[ch] }
+                };
+            });
+
+            document.getElementById('y700-monthly-avg').textContent = y700Count > 0 ? Math.round(y700TotalSales / y700Count) : 0;
+            document.getElementById('y700-last7-avg').textContent = y700Count > 0 ? Math.round(y700Last7Total / Math.min(7, y700Count)) : 0;
+
+            Plotly.newPlot('y700-trend-chart', y700Traces, {
+                margin: { l: 60, r: 20, t: 40, b: 80 },
+                height: 400,
+                xaxis: {
+                    tickangle: -45,
+                    showgrid: false,
+                    tickfont: { size: 10 }
+                },
+                yaxis: { showgrid: false, title: '销量（台）' },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            }, {responsive: true});
+
+            // 第十三行（3月新品）：Y700 五代分天销售走势
+            if (currentMonth === '3月' && data.model_channel_daily['Y700 五代']) {
+                const y7005thRow = document.getElementById('y700-5th-row');
+                y7005thRow.style.display = 'grid';
+                const y7005thData = data.model_channel_daily['Y700 五代'];
+                let y7005thTotalSales = 0;
+                let y7005thLast7Total = 0;
+                let y7005thCount = 0;
+
+                const y7005thTraces = ['京东官旗', '官网', '天猫', '抖快'].map(ch => {
+                    const chData = y7005thData[ch] || {};
+                    const dates = Object.keys(chData).sort((a, b) => new Date(a) - new Date(b));
+                    const values = dates.map(d => chData[d] || 0);
+
+                    values.forEach((v, i) => {
+                        y7005thTotalSales += v;
+                        if (i >= values.length - 7) y7005thLast7Total += v;
+                    });
+                    y7005thCount = Math.max(y7005thCount, values.length);
+
+                    return {
+                        x: dates.map(formatDate),
+                        y: values,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: ch,
+                        line: { color: channelColors[ch], width: 2 },
+                        marker: { size: 5, color: channelColors[ch] }
+                    };
+                });
+
+                document.getElementById('y700-5th-monthly-avg').textContent = y7005thCount > 0 ? Math.round(y7005thTotalSales / y7005thCount) : 0;
+                document.getElementById('y700-5th-last7-avg').textContent = y7005thCount > 0 ? Math.round(y7005thLast7Total / Math.min(7, y7005thCount)) : 0;
+
+                Plotly.newPlot('y700-5th-trend-chart', y7005thTraces, {
+                    margin: { l: 60, r: 20, t: 40, b: 80 },
+                    height: 400,
+                    xaxis: {
+                        tickangle: -45,
+                        showgrid: false,
+                        tickfont: { size: 10 }
+                    },
+                    yaxis: { showgrid: false, title: '销量（台）' },
+                    legend: {
+                        orientation: 'h',
+                        y: 1.1,
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)'
+                }, {responsive: true});
+            } else {
+                const y7005thRowHide = document.getElementById('y700-5th-row');
+                if (y7005thRowHide) y7005thRowHide.style.display = 'none';
+            }
+
+            // 第十四行（3月新品）：小新Pro13分天销售走势
+            if (currentMonth === '3月' && data.model_channel_daily['小新Pro13']) {
+                const xiaoxinPro13Row = document.getElementById('xiaoxin-pro13-row');
+                xiaoxinPro13Row.style.display = 'grid';
+                const xiaoxinPro13Data = data.model_channel_daily['小新Pro13'];
+                let xiaoxinPro13TotalSales = 0;
+                let xiaoxinPro13Last7Total = 0;
+                let xiaoxinPro13Count = 0;
+
+                const xiaoxinPro13Traces = ['京东官旗', '官网', '天猫', '抖快'].map(ch => {
+                    const chData = xiaoxinPro13Data[ch] || {};
+                    const dates = Object.keys(chData).sort((a, b) => new Date(a) - new Date(b));
+                    const values = dates.map(d => chData[d] || 0);
+
+                    values.forEach((v, i) => {
+                        xiaoxinPro13TotalSales += v;
+                        if (i >= values.length - 7) xiaoxinPro13Last7Total += v;
+                    });
+                    xiaoxinPro13Count = Math.max(xiaoxinPro13Count, values.length);
+
+                    return {
+                        x: dates.map(formatDate),
+                        y: values,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: ch,
+                        line: { color: channelColors[ch], width: 2 },
+                        marker: { size: 5, color: channelColors[ch] }
+                    };
+                });
+
+                document.getElementById('xiaoxin-pro13-monthly-avg').textContent = xiaoxinPro13Count > 0 ? Math.round(xiaoxinPro13TotalSales / xiaoxinPro13Count) : 0;
+                document.getElementById('xiaoxin-pro13-last7-avg').textContent = xiaoxinPro13Count > 0 ? Math.round(xiaoxinPro13Last7Total / Math.min(7, xiaoxinPro13Count)) : 0;
+
+                Plotly.newPlot('xiaoxin-pro13-trend-chart', xiaoxinPro13Traces, {
+                    margin: { l: 60, r: 20, t: 40, b: 80 },
+                    height: 400,
+                    xaxis: {
+                        tickangle: -45,
+                        showgrid: false,
+                        tickfont: { size: 10 }
+                    },
+                    yaxis: { showgrid: false, title: '销量（台）' },
+                    legend: {
+                        orientation: 'h',
+                        y: 1.1,
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)'
+                }, {responsive: true});
+            } else {
+                const xiaoxinPro13RowHide = document.getElementById('xiaoxin-pro13-row');
+                if (xiaoxinPro13RowHide) xiaoxinPro13RowHide.style.display = 'none';
+            }
+
+            // 第十三行和第十四行：各渠道重点机型分布Mix（甜甜圈图）
+            const channelModelMix = data.channel_model_mix || {};
+
+            // 机型固定颜色映射
+            const modelColorMap = {
+                '小新平板11': '#1890ff',
+                '小新Pad11': '#1890ff',
+                '小新平板12.1': '#52c41a',
+                'PadPro12.7': '#722ed1',
+                'PadProGT': '#faad14',
+                '拯救者Y700 4代': '#f5222d',
+                'Y700 4代': '#f5222d',
+                '小新pad 2023': '#13c2c2',
+                '小新pad 2024': '#eb2f96',
+                'YogaPadPro 14.5': '#fa8c16',
+                'Pad 2024 舒视智学版': '#a0d911',
+                '拯救者Y700 3代': '#52c41a',
+                'Pad Studio': '#722ed1',
+                '小新pad plus 2023': '#faad14',
+                'Y700 2代': '#f5222d',
+                'YogaPadPro 12.7': '#13c2c2',
+                'Pad Pro12.7 类纸屏': '#eb2f96'
+            };
+
+            // 获取所有出现过的机型
+            const allModels = new Set();
+            Object.values(channelModelMix).forEach(mix => {
+                Object.keys(mix).forEach(model => allModels.add(model));
+            });
+
+            // 为每个机型分配固定颜色
+            const defaultColors = ['#1890ff', '#52c41a', '#722ed1', '#faad14', '#f5222d', '#13c2c2', '#eb2f96', '#fa8c16', '#a0d911', '#ff4d4f', '#40a9ff', '#73d13d'];
+            const modelColorAssignments = {};
+            Array.from(allModels).forEach((model, idx) => {
+                modelColorAssignments[model] = modelColorMap[model] || defaultColors[idx % defaultColors.length];
+            });
+
+            // 渲染渠道机型分布图的函数
+            function renderChannelModelMix(chartId, channelName) {
+                const mixData = channelModelMix[channelName] || {};
+                const labels = Object.keys(mixData);
+                const values = Object.values(mixData);
+
+                if (labels.length === 0) {
+                    Plotly.newPlot(chartId, [], {
+                        margin: { l: 20, r: 20, t: 20, b: 20 },
+                        paper_bgcolor: 'rgba(0,0,0,0)'
+                    }, {responsive: true});
+                    return;
+                }
+
+                const pieData = [{
+                    values: values,
+                    labels: labels,
+                    type: 'pie',
+                    hole: 0.5,
+                    marker: {
+                        colors: labels.map(label => modelColorAssignments[label] || '#999')
+                    },
+                    textinfo: 'percent',
+                    textposition: 'inside',
+                    hovertemplate: '%{label}<br>销量: %{value}台<br>占比: %{percent}<extra></extra>'
+                }];
+
+                Plotly.newPlot(chartId, pieData, {
+                    margin: { l: 20, r: 20, t: 20, b: 80 },
+                    showlegend: true,
+                    legend: {
+                        orientation: 'h',
+                        y: -0.1,
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)'
+                }, {responsive: true});
+            }
+
+            // 渲染四个渠道的机型分布图
+            renderChannelModelMix('jd-model-mix-chart', '京东官旗');
+            renderChannelModelMix('gw-model-mix-chart', '官网');
+            renderChannelModelMix('tm-model-mix-chart', '天猫');
+            renderChannelModelMix('dk-model-mix-chart', '抖快');
+
+            // FY25 Q4 看板：再次强制隐藏分店铺走势行
+            console.log('Month parameter in renderCharts:', month);
+            if (month === 'FY25 Q4') {
+                console.log('Hiding Bay Day and 按店铺 rows for FY25 Q4');
+                document.querySelectorAll('.chart-row').forEach((row, index) => {
+                    const title = row.querySelector('.chart-title');
+                    if (title) {
+                        const titleText = title.textContent;
+                        // 隐藏包含"Bay Day"或"按店铺"的行
+                        if (titleText.includes('Bay Day') || titleText.includes('按店铺')) {
+                            console.log('Hiding row', index, 'with title:', titleText);
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            }
+        }
+
+        // 保存目标到localStorage
+        function saveTargetsToStorage() {
+            const targetsData = {};
+            Object.keys(dashboardData).forEach(month => {
+                targetsData[month] = {
+                    targets: dashboardData[month].targets,
+                    channel_targets: dashboardData[month].channel_targets
+                };
+            });
+            localStorage.setItem('padDashboardTargets', JSON.stringify(targetsData));
+        }
+
+        // 从localStorage加载目标
+        function loadTargetsFromStorage() {
+            const saved = localStorage.getItem('padDashboardTargets');
+            if (saved) {
+                const targetsData = JSON.parse(saved);
+                Object.keys(targetsData).forEach(month => {
+                    if (dashboardData[month]) {
+                        dashboardData[month].targets = targetsData[month].targets;
+                        dashboardData[month].channel_targets = targetsData[month].channel_targets;
+                        // 重新计算达成率
+                        const actual = dashboardData[month].actual_total;
+                        const target = dashboardData[month].targets['总目标'];
+                        dashboardData[month].achievement_rate = Math.round((actual / target) * 100 * 10) / 10;
+                    }
+                });
+            }
+        }
+
+        // 更新总目标
+        function updateTarget(value) {
+            const numValue = parseFloat(value);
+            if (numValue > 0) {
+                dashboardData[currentMonth].targets['总目标'] = numValue / 1000;
+                // 重新计算达成率
+                const actual = dashboardData[currentMonth].actual_total;
+                const newRate = (actual / (numValue / 1000)) * 100;
+                dashboardData[currentMonth].achievement_rate = Math.round(newRate * 10) / 10;
+                saveTargetsToStorage();
+                updateDashboard(currentMonth);
+            }
+        }
+
+        // 更新渠道目标
+        function updateChannelTarget(channel, value) {
+            const numValue = parseFloat(value);
+            if (numValue > 0) {
+                dashboardData[currentMonth].channel_targets[channel] = numValue / 1000;
+                saveTargetsToStorage();
+                updateDashboard(currentMonth);
+            }
+        }
+
+        // 页面加载时从localStorage加载保存的目标值
+        loadTargetsFromStorage();
+
+        init();
+    </script>
+</body>
+</html>
